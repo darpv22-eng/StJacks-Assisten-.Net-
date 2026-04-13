@@ -9,6 +9,24 @@
 <p>
     <a asp-action="Create">Create New</a>
 </p>
+
+<div class="mb-4">
+    <div class="btn-group" role="group">
+        <a asp-action="Index" class="btn btn-outline-primary @(ViewBag.SelectedCategory == null ? "active" : "")">Todos</a>
+
+        @if (ViewBag.Categories != null)
+        {
+            foreach (var cat in ViewBag.Categories)
+            {
+                <a asp-action="Index" asp-route-categoryId="@cat.Id"
+                   class="btn btn-outline-primary @(ViewBag.SelectedCategory == cat.Id ? "active" : "")">
+                    @cat.Name
+                </a>
+            }
+        }
+    </div>
+</div>
+
 <table class="table">
     <thead>
         <tr>
@@ -19,29 +37,30 @@
                 @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Number)
+                Categoría
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Code)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Number)
-            </td>
-            <td>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Code)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @(item.Category?.Name ?? "N/A")
+                </td>
+                <td>
                     @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
+                    @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StjacksAssistens.Data;
 using StjacksAssistens.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace StjacksAssistens.Controllers
 {
@@ -15,18 +16,27 @@ namespace StjacksAssistens.Controllers
         {
             _context = context;
         }
-
-        // --- LISTAR ---
-        public async Task<IActionResult> Index()
+        // --- LISTAR CON FILTRO ---
+        public async Task<IActionResult> Index(int? categoryId)
         {
-            // Trae todos los operadores de la base de datos
-            var operators = await _context.Operators.ToListAsync();
-            return View(operators);
+            var categories = await _context.Category.ToListAsync();
+            ViewBag.Categories = categories;
+            ViewBag.SelectedCategory = categoryId;
+
+            var query = _context.Operators.Include(o => o.Category).AsQueryable();
+
+            if (categoryId.HasValue && categoryId > 0)
+            {
+                query = query.Where(o => o.CategoryId == categoryId);
+            }
+
+            return View(await query.ToListAsync());
         }
-
         // --- AGREGAR (Vista) ---
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            var categories = await _context.Category.ToListAsync();
+            ViewBag.CategoryList = new SelectList(categories, "Id", "Name");
             return View();
         }
 

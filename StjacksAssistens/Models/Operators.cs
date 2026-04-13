@@ -17,6 +17,13 @@ namespace StjacksAssistens.Models
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
         public int? Number { get; set; }
+
+        [Required]
+        public int CategoryId { get; set; }
+
+        [ForeignKey("CategoryId")]
+        public virtual Category? Category { get; set; }
+
     }
 }
 
