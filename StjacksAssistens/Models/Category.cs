@@ -10,14 +10,9 @@ namespace StjacksAssistens.Models
     public class Category
     {
         [Key]
+        [Column("CategoryId")]
         public int Id { get; set; }
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
-
-        [ForeignKey("Operators")]
-        public int OperatorsId { get; set; }
-
-        [NotMapped]
-        public Operators Operators { get; set; } = null!;
     }
 }
