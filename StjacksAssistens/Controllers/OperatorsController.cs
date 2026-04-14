@@ -17,10 +17,30 @@ namespace StjacksAssistens.Controllers
             _context = context;
         }
         // --- LISTAR CON FILTRO ---
+        //public async Task<IActionResult> Index(int? categoryId)
+        //{
+        //    var categories = await _context.Category.ToListAsync();
+        //    ViewBag.Categories = categories;
+        //    ViewBag.SelectedCategory = categoryId;
+
+        //    var query = _context.Operators.Include(o => o.Category).AsQueryable();
+
+        //    if (categoryId.HasValue && categoryId > 0)
+        //    {
+        //        query = query.Where(o => o.CategoryId == categoryId);
+        //    }
+
+        //    return View(await query.ToListAsync());
+        //}
+        // --- LISTAR CON FILTRO ---
         public async Task<IActionResult> Index(int? categoryId)
         {
             var categories = await _context.Category.ToListAsync();
-            ViewBag.Categories = categories;
+            ViewBag.Categories = categories; // Esto es para tus botones de filtro
+
+            // AGREGA ESTA LÍNEA: Crea la lista para el modal de creación
+            ViewBag.CategoryList = new SelectList(categories, "Id", "Name");
+
             ViewBag.SelectedCategory = categoryId;
 
             var query = _context.Operators.Include(o => o.Category).AsQueryable();
@@ -32,6 +52,10 @@ namespace StjacksAssistens.Controllers
 
             return View(await query.ToListAsync());
         }
+
+
+
+
         // --- AGREGAR (Vista) ---
         public async Task<IActionResult> Create()
         {

@@ -6,9 +6,97 @@
 
 <h1>Index</h1>
 
+
+<link rel="stylesheet" href="~/css/operators.css" />
+
+
+@* Ventana de crear modal *@ 
 <p>
-    <a asp-action="Create">Create New</a>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOperatorModal">
+        Create New
+    </button>
 </p>
+
+@* <div class="modal fade" id="createOperatorModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Crear Nuevo Operario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Create">
+                    <div class="form-group mb-3">
+                        <label class="control-label">Código</label>
+                        <input name="Code" class="form-control" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="control-label">Nombre</label>
+                        <input name="Name" class="form-control" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="control-label">Categoría de Operario</label>
+                        <select name="CategoryId" class="form-control" asp-items="ViewBag.CategoryList" required>
+                            <option value="">-- Seleccione una opción --</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <input type="submit" value="Guardar Operario" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> *@
+
+
+
+<div class="modal fade" id="createOperatorModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar Nuevo Operario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Create" method="post">
+                    <div class="form-group mb-3">
+                        <label class="control-label">Código</label>
+                        <input name="Code" class="form-control" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Nombre Completo</label>
+                        <input name="Name" class="form-control" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Categoría de Operario</label>
+                        @* Verifica que asp-items coincida con el nombre en el controlador *@
+                        <select name="CategoryId" class="form-control" asp-items="ViewBag.CategoryList" required>
+                            <option value="">-- Seleccione una opción --</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+@* <p>
+    <a asp-action="Create">Create New</a>
+</p> *@
 
 <div class="mb-4">
     <div class="btn-group" role="group">
@@ -56,11 +144,64 @@
                     @(item.Category?.Name ?? "N/A")
                 </td>
                 <td>
-                    @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
-                    @Html.ActionLink("Details", "Details", new { id = item.Id }) |
-                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                    <div class="dropdown-container">
+                        <button type="button" class="btn btn-sm btn-light menu-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
+                        </button>
+
+                        <div class="card-menu">
+                            <ul class="list">
+                                <li>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="element">
+                                        <svg class="lucide lucide-pencil" stroke-width="2" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+                                        <p class="label">Editar</p>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="element">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                                        <p class="label">Detalles</p>
+                                    </a>
+                                </li>
+                            </ul>
+                            <div class="separator"></div>
+                            <ul class="list">
+                                <li>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="element delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                        <p class="label">Eliminar</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </td>
+
+
             </tr>
         }
     </tbody>
 </table>
+@section Scripts {
+    @* Importante para que las validaciones funcionen dentro del modal *@
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener("click", function (event) {
+            const isButton = event.target.closest(".menu-button");
+            const currentMenu = isButton ? isButton.nextElementSibling : null;
+
+            document.querySelectorAll(".card-menu.show").forEach((menu) => {
+                if (menu !== currentMenu) {
+                    menu.classList.remove("show");
+                }
+            });
+
+            if (isButton && currentMenu) {
+                currentMenu.classList.toggle("show");
+            }
+        });
+    </script>
+}

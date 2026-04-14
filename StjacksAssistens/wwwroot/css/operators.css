@@ -1,0 +1,86 @@
+﻿/* Posicionamiento para que funcione en la tabla */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Elimina o comenta el .dropdown-container:hover .card-menu */
+
+.card-menu {
+    display: none; /* Se mantiene oculto por defecto */
+    position: absolute;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    width: 180px;
+    background-color: white;
+    border-radius: 10px;
+    padding: 10px 0;
+    margin-top: 5px;
+    flex-direction: column;
+    gap: 5px;
+}
+
+    /* Esta clase la controlaremos con JavaScript */
+    .card-menu.show {
+        display: flex;
+    }
+/* Mostrar cuando el padre tiene hover o vía JS */
+.dropdown-container:hover .card-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Tu diseño original adaptado */
+.card-menu .separator {
+    border-top: 1px solid #e0e0e0;
+    margin: 5px 0;
+}
+
+.card-menu .list {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 10px;
+    margin: 0;
+}
+
+.card-menu .element {
+    display: flex;
+    align-items: center;
+    color: #42434a;
+    gap: 10px;
+    transition: all 0.2s ease-out;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none; /* Quitar subrayado de links */
+}
+
+    .card-menu .element svg {
+        width: 18px;
+        height: 18px;
+        stroke: #7e8590;
+    }
+
+.card-menu .label {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Hovers */
+.card-menu .element:hover {
+    background-color: #5353ff;
+    color: #fff;
+}
+
+    .card-menu .element:hover svg {
+        stroke: #fff;
+    }
+
+.card-menu .delete:hover {
+    background-color: #dc3545;
+}
