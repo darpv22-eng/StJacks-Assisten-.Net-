@@ -1,207 +1,203 @@
-﻿@model IEnumerable<StjacksAssistens.Models.Operators>
-
+﻿@model StjacksAssistens.Models.AttendanceViewModel
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Asistencia";
 }
-
-<h1>Index</h1>
-
 
 <link rel="stylesheet" href="~/css/operators.css" />
 
-
-@* Ventana de crear modal *@ 
-<p>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOperatorModal">
-        Create New
-    </button>
-</p>
-
-@* <div class="modal fade" id="createOperatorModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Crear Nuevo Operario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form asp-action="Create">
-                    <div class="form-group mb-3">
-                        <label class="control-label">Código</label>
-                        <input name="Code" class="form-control" required />
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="control-label">Nombre</label>
-                        <input name="Name" class="form-control" required />
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="control-label">Categoría de Operario</label>
-                        <select name="CategoryId" class="form-control" asp-items="ViewBag.CategoryList" required>
-                            <option value="">-- Seleccione una opción --</option>
-                        </select>
-                    </div>
-                    <div class="modal-footer px-0 pb-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <input type="submit" value="Guardar Operario" class="btn btn-primary" />
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div> *@
-
-
-
-<div class="modal fade" id="createOperatorModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Registrar Nuevo Operario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form asp-action="Create" method="post">
-                    <div class="form-group mb-3">
-                        <label class="control-label">Código</label>
-                        <input name="Code" class="form-control" required />
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="control-label">Nombre Completo</label>
-                        <input name="Name" class="form-control" required />
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="control-label">Categoría de Operario</label>
-                        @* Verifica que asp-items coincida con el nombre en el controlador *@
-                        <select name="CategoryId" class="form-control" asp-items="ViewBag.CategoryList" required>
-                            <option value="">-- Seleccione una opción --</option>
-                        </select>
-                    </div>
-
-                    <div class="modal-footer px-0 pb-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-primary">Guardar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Control de Asistencia</h1>
+    <div>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createPeriodModal">
+            Nuevo Periodo
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOperatorModal">
+            Nuevo Operario
+        </button>
     </div>
 </div>
 
-
-
-
-
-
-@* <p>
-    <a asp-action="Create">Create New</a>
-</p> *@
-
+@* Navegación de Periodos (Pestañas superiores para que no estorben) *@
 <div class="mb-4">
-    <div class="btn-group" role="group">
-        <a asp-action="Index" class="btn btn-outline-primary @(ViewBag.SelectedCategory == null ? "active" : "")">Todos</a>
-
-        @if (ViewBag.Categories != null)
+    <ul class="nav nav-tabs">
+        @foreach (var p in (List<StjacksAssistens.Models.Periodss>)ViewBag.AllPeriods)
         {
-            foreach (var cat in ViewBag.Categories)
-            {
-                <a asp-action="Index" asp-route-categoryId="@cat.Id"
-                   class="btn btn-outline-primary @(ViewBag.SelectedCategory == cat.Id ? "active" : "")">
-                    @cat.Name
+            <li class="nav-item">
+                <a asp-action="Index" asp-route-periodId="@p.Id"
+                   class="nav-link @(Model.CurrentPeriod.Id == p.Id ? "active fw-bold" : "")">
+                    @p.Description
                 </a>
-            }
+            </li>
+        }
+    </ul>
+</div>
+
+@* Filtros de Categoría *@
+<div class="mb-3">
+    <div class="btn-group" role="group">
+        <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod.Id" class="btn btn-outline-primary @(ViewBag.SelectedCategory == null ? "active" : "")">Todos</a>
+        @foreach (var cat in ViewBag.Categories)
+        {
+            <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-periodId="@Model.CurrentPeriod.Id"
+               class="btn btn-outline-primary @(ViewBag.SelectedCategory == cat.Id ? "active" : "")">
+                @cat.Name
+            </a>
         }
     </div>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Code)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                Categoría
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+<div class="table-responsive">
+    <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
             <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Code)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @(item.Category?.Name ?? "N/A")
-                </td>
-                <td>
-                    <div class="dropdown-container">
-                        <button type="button" class="btn btn-sm btn-light menu-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
-                        </button>
-
-                        <div class="card-menu">
-                            <ul class="list">
-                                <li>
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="element">
-                                        <svg class="lucide lucide-pencil" stroke-width="2" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
-                                        <p class="label">Editar</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="element">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
-                                        <p class="label">Detalles</p>
-                                    </a>
-                                </li>
-                            </ul>
-                            <div class="separator"></div>
-                            <ul class="list">
-                                <li>
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="element delete">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                                        <p class="label">Eliminar</p>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </td>
-
-
-            </tr>
-        }
-    </tbody>
-</table>
-@section Scripts {
-    @* Importante para que las validaciones funcionen dentro del modal *@
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    <script>
-        document.addEventListener("click", function (event) {
-            const isButton = event.target.closest(".menu-button");
-            const currentMenu = isButton ? isButton.nextElementSibling : null;
-
-            document.querySelectorAll(".card-menu.show").forEach((menu) => {
-                if (menu !== currentMenu) {
-                    menu.classList.remove("show");
+                <th>CODIGO</th>
+                <th class="text-start">NOMBRE</th>
+                <th>CATEGORÍA</th>
+                @foreach (var day in Model.DaysInPeriod)
+                {
+                    <th style="min-width: 60px;">@day.ToString("dd-MMM")</th>
                 }
-            });
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    <td>@row.Code</td>
+                    <td class="text-start">@row.Name</td>
+                    <td><span class="badge bg-info text-dark">@row.CategoryName</span></td>
 
-            if (isButton && currentMenu) {
-                currentMenu.classList.toggle("show");
+                    @foreach (var day in Model.DaysInPeriod)
+                    {
+                        var status = string.IsNullOrEmpty(row.DailyStatus.GetValueOrDefault(day)) ? "X" : row.DailyStatus[day];
+
+                        <td class="attendance-cell"
+                            data-opid="@row.OperatorsId"
+                            data-date="@day.ToString("yyyy-MM-dd")"
+                            data-periodid="@Model.CurrentPeriod.Id"
+                            onclick="toggleStatus(this)"
+                            style="cursor:pointer; font-weight:bold; user-select:none; @(status != "X" ? "color:red;" : "")">
+                            @status
+                        </td>
+                    }
+
+                    <td>
+                        <div class="dropdown-container">
+                            <button type="button" class="btn btn-sm btn-light menu-button">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" /></svg>
+                            </button>
+                            <div class="card-menu">
+                                <ul class="list">
+                                    <li><a asp-action="Edit" asp-route-id="@row.OperatorsId" class="element">Editar</a></li>
+                                </ul>
+                                <div class="separator"></div>
+                                <ul class="list">
+                                    <li>
+                                        <button type="button" class="element delete border-0 bg-transparent w-100"
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                                data-bs-id="@row.OperatorsId" data-bs-name="@row.Name">
+                                            Eliminar
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             }
-        });
+        </tbody>
+    </table>
+</div>
+
+@* MODAL: NUEVO PERIODO (Corregido para apuntar al controlador de Operarios) *@
+<div class="modal fade" id="createPeriodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Operators" asp-action="CreatePeriod" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Catorcena</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <input name="Description" class="form-control" placeholder="Ej: 13 al 24 de Abril" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Inicio</label>
+                        <input type="date" name="StartDate" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Fin</label>
+                        <input type="date" name="EndDate" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear y Abrir Periodo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* MODAL: NUEVO OPERARIO *@
+<div class="modal fade" id="createOperatorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Create" method="post">
+                <div class="modal-header"><h5>Nuevo Operario</h5></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Código</label>
+                        <input name="Code" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Nombre</label>
+                        <input name="Name" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Categoría</label>
+                        <select name="CategoryId" class="form-control"
+                                asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))">
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleStatus(cell) {
+            const states = ["X", "PP", "ISS", "INC"];
+            let currentStatus = cell.innerText.trim();
+
+            let nextIndex = (states.indexOf(currentStatus) + 1) % states.length;
+            let nextStatus = states[nextIndex];
+
+            const opId = cell.getAttribute("data-opid");
+            const date = cell.getAttribute("data-date");
+            const periodId = cell.getAttribute("data-periodid");
+
+            $.post('/Operators/UpdateAttendance', {
+                operatorId: opId,
+                date: date,
+                status: nextStatus,
+                periodId: periodId
+            })
+            .done(function(data) {
+                cell.innerText = nextStatus;
+                cell.style.color = (nextStatus === "X") ? "black" : "red";
+            })
+            .fail(function() {
+                alert("Error al guardar la asistencia.");
+            });
+        }
     </script>
 }

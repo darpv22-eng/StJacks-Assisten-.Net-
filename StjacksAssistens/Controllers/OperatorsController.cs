@@ -16,42 +16,102 @@ namespace StjacksAssistens.Controllers
         {
             _context = context;
         }
-        // --- LISTAR CON FILTRO ---
-        //public async Task<IActionResult> Index(int? categoryId)
-        //{
-        //    var categories = await _context.Category.ToListAsync();
-        //    ViewBag.Categories = categories;
-        //    ViewBag.SelectedCategory = categoryId;
 
-        //    var query = _context.Operators.Include(o => o.Category).AsQueryable();
-
-        //    if (categoryId.HasValue && categoryId > 0)
-        //    {
-        //        query = query.Where(o => o.CategoryId == categoryId);
-        //    }
-
-        //    return View(await query.ToListAsync());
-        //}
-        // --- LISTAR CON FILTRO ---
-        public async Task<IActionResult> Index(int? categoryId)
+        public async Task<IActionResult> Index(int? periodId)
         {
-            var categories = await _context.Category.ToListAsync();
-            ViewBag.Categories = categories; // Esto es para tus botones de filtro
+            var period = periodId.HasValue
+                ? await _context.Periodss.FindAsync(periodId)
+                : await _context.Periodss.FirstOrDefaultAsync(p => p.IsActive);
 
-            // AGREGA ESTA LÍNEA: Crea la lista para el modal de creación
-            ViewBag.CategoryList = new SelectList(categories, "Id", "Name");
+            if (period == null) return View("ErrorPeriodo");
 
-            ViewBag.SelectedCategory = categoryId;
-
-            var query = _context.Operators.Include(o => o.Category).AsQueryable();
-
-            if (categoryId.HasValue && categoryId > 0)
+            var days = new List<DateTime>();
+            for (var dt = period.StartDate; dt <= period.EndDate; dt = dt.AddDays(1))
             {
-                query = query.Where(o => o.CategoryId == categoryId);
+                if (dt.DayOfWeek != DayOfWeek.Saturday && dt.DayOfWeek != DayOfWeek.Sunday)
+                    days.Add(dt);
             }
 
-            return View(await query.ToListAsync());
+            var operators = await _context.Operators.Include(o => o.Category).ToListAsync();
+            var allAttendance = await _context.Attendence.Where(a => a.PeriodId == period.Id).ToListAsync();
+
+            var model = new AttendanceViewModel
+            {
+                CurrentPeriod = period,
+                DaysInPeriod = days,
+                Rows = operators.Select(o => new OperatorAttendanceRow
+                {
+                    OperatorsId = o.Id,
+                    Code = o.Code,
+                    Name = o.Name,
+                    CategoryName = o.Category?.Name,
+                    DailyStatus = days.ToDictionary(
+                        d => d,
+                        d => allAttendance.FirstOrDefault(a => a.OperatorsId == o.Id && a.AttendanceDate.Date == d.Date)?.Status ?? "X"
+                    )
+                }).ToList()
+            };
+
+            // --- ESTO ES LO QUE TE FALTA PARA QUITAR EL ERROR DE LA IMAGEN ---
+            ViewBag.Categories = await _context.Category.ToListAsync();
+            ViewBag.AllPeriods = await _context.Periodss.ToListAsync();
+            // ----------------------------------------------------------------
+
+            return View(model);
         }
+        [HttpPost]
+        public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
+        {
+            var attendanceDate = DateTime.Parse(date);
+            var attendance = await _context.Attendence
+                .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate.Date);
+
+            if (attendance == null)
+            {
+                attendance = new Attendence
+                {
+                    OperatorsId = operatorId,
+                    AttendanceDate = attendanceDate,
+                    Status = status,
+                    PeriodId = periodId
+                };
+                _context.Attendence.Add(attendance);
+            }
+            else
+            {
+                attendance.Status = status;
+                _context.Attendence.Update(attendance);
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        [HttpPost]
+        public async Task<IActionResult> CreatePeriod(string Description, DateTime StartDate, DateTime EndDate)
+        {
+            var newPeriod = new Periodss
+            {
+                Description = Description,
+                StartDate = StartDate,
+                EndDate = EndDate
+            };
+
+            _context.Periodss.Add(newPeriod);
+            await _context.SaveChangesAsync();
+
+            // Redireccionamos al Index pasando el ID del nuevo periodo para que aparezca seleccionado
+            return RedirectToAction(nameof(Index), new { periodId = newPeriod.Id });
+        }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -118,7 +178,9 @@ namespace StjacksAssistens.Controllers
         {
             if (id == null) return NotFound();
 
+            // Agregamos .Include para traer la categoría
             var operatorModel = await _context.Operators
+                .Include(o => o.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (operatorModel == null) return NotFound();
