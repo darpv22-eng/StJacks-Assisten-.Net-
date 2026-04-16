@@ -17,14 +17,16 @@ namespace StjacksAssistens.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index(int? periodId)
+        public async Task<IActionResult> Index(int? periodId, int? categoryId) // Agregamos categoryId aquí
         {
+            // 1. Obtener el periodo
             var period = periodId.HasValue
                 ? await _context.Periodss.FindAsync(periodId)
                 : await _context.Periodss.FirstOrDefaultAsync(p => p.IsActive);
 
             if (period == null) return View("ErrorPeriodo");
 
+            // 2. Generar días (Lunes a Viernes)
             var days = new List<DateTime>();
             for (var dt = period.StartDate; dt <= period.EndDate; dt = dt.AddDays(1))
             {
@@ -32,9 +34,20 @@ namespace StjacksAssistens.Controllers
                     days.Add(dt);
             }
 
-            var operators = await _context.Operators.Include(o => o.Category).ToListAsync();
+            // 3. Obtener operarios filtrando por categoría si es necesario
+            var query = _context.Operators.Include(o => o.Category).AsQueryable();
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(o => o.CategoryId == categoryId);
+            }
+
+            var operators = await query.ToListAsync();
+
+            // 4. Obtener asistencia del periodo
             var allAttendance = await _context.Attendence.Where(a => a.PeriodId == period.Id).ToListAsync();
 
+            // 5. Mapear al ViewModel
             var model = new AttendanceViewModel
             {
                 CurrentPeriod = period,
@@ -52,13 +65,15 @@ namespace StjacksAssistens.Controllers
                 }).ToList()
             };
 
-            // --- ESTO ES LO QUE TE FALTA PARA QUITAR EL ERROR DE LA IMAGEN ---
+            // 6. Llenar ViewBags para la vista
             ViewBag.Categories = await _context.Category.ToListAsync();
             ViewBag.AllPeriods = await _context.Periodss.ToListAsync();
-            // ----------------------------------------------------------------
+            ViewBag.SelectedCategory = categoryId; // Ahora sí funcionará porque está en los parámetros
 
             return View(model);
         }
+
+
         [HttpPost]
         public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
         {

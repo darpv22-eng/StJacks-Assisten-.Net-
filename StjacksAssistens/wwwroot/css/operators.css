@@ -1,86 +1,163 @@
-﻿/* Posicionamiento para que funcione en la tabla */
+﻿/* =========================================
+   NUEVO BUSCADOR "CLEAN & MODERN"
+   ========================================= */
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-group {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px; /* Bordes menos redondeados para que pegue con los botones */
+    padding: 5px 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 280px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+    /* Efecto al hacer clic para buscar */
+    .search-group:focus-within {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+        width: 320px; /* Se expande un poco al escribir */
+    }
+
+.search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 6px 10px;
+    width: 100%;
+    font-size: 14px;
+    color: #495057;
+}
+
+    .search-input::placeholder {
+        color: #adb5bd;
+        font-weight: 400;
+    }
+
+.search-icon-svg {
+    fill: #adb5bd;
+    transition: fill 0.3s ease;
+}
+
+.search-group:focus-within .search-icon-svg {
+    fill: #0d6efd; /* El icono se vuelve azul cuando escribes */
+}
+
+/* Botón de limpiar búsqueda (X) que aparece solo si hay texto */
+.search-input:not(:placeholder-shown) + .clear-search {
+    display: block;
+}
+
+/* =========================================
+   2. BOTONES DE FILTRO (CATEGORÍAS)
+   ========================================= */
+.btn-filter {
+    border: 1px solid #e0e0e0;
+    background: white;
+    color: #555;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .btn-filter:hover {
+        background-color: #f8f9fa;
+        color: #000;
+    }
+
+    /* Estado activo: combina con el buscador negro */
+    .btn-filter.active {
+        background-color: #1a1a1a !important;
+        color: white !important;
+        border-color: #1a1a1a;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+/* =========================================
+   3. MENÚ DESPLEGABLE (TRES PUNTOS)
+   ========================================= */
 .dropdown-container {
     position: relative;
     display: inline-block;
 }
 
-/* Elimina o comenta el .dropdown-container:hover .card-menu */
-
 .card-menu {
-    display: none; /* Se mantiene oculto por defecto */
+    display: none;
     position: absolute;
     right: 0;
-    z-index: 1000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    top: 100%;
+    z-index: 1050;
     width: 180px;
     background-color: white;
     border-radius: 10px;
     padding: 10px 0;
     margin-top: 5px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     flex-direction: column;
     gap: 5px;
 }
 
-    /* Esta clase la controlaremos con JavaScript */
     .card-menu.show {
+        display: flex !important;
+    }
+
+    .card-menu .list {
+        list-style-type: none;
         display: flex;
-    }
-/* Mostrar cuando el padre tiene hover o vía JS */
-.dropdown-container:hover .card-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-/* Tu diseño original adaptado */
-.card-menu .separator {
-    border-top: 1px solid #e0e0e0;
-    margin: 5px 0;
-}
-
-.card-menu .list {
-    list-style-type: none;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 0 10px;
-    margin: 0;
-}
-
-.card-menu .element {
-    display: flex;
-    align-items: center;
-    color: #42434a;
-    gap: 10px;
-    transition: all 0.2s ease-out;
-    padding: 8px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    text-decoration: none; /* Quitar subrayado de links */
-}
-
-    .card-menu .element svg {
-        width: 18px;
-        height: 18px;
-        stroke: #7e8590;
+        flex-direction: column;
+        gap: 4px;
+        padding: 0 10px;
+        margin: 0;
     }
 
-.card-menu .label {
-    font-weight: 600;
-    font-size: 14px;
-    margin: 0;
-}
-
-/* Hovers */
-.card-menu .element:hover {
-    background-color: #5353ff;
-    color: #fff;
-}
-
-    .card-menu .element:hover svg {
-        stroke: #fff;
+    .card-menu .element {
+        display: flex;
+        align-items: center;
+        color: #42434a;
+        gap: 10px;
+        transition: all 0.2s ease-out;
+        padding: 8px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
     }
 
-.card-menu .delete:hover {
-    background-color: #dc3545;
+    .card-menu .separator {
+        border-top: 1px solid #e0e0e0;
+        margin: 5px 0;
+    }
+
+    /* Hovers del Menú */
+    .card-menu .element:hover {
+        background-color: #5353ff; /* Azul vibrante */
+        color: #fff;
+    }
+
+    .card-menu .element.delete:hover {
+        background-color: #dc3545; /* Rojo peligro */
+        color: white;
+    }
+
+/* =========================================
+   4. MEJORAS DE TABLA Y CONTENEDORES
+   ========================================= */
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    background: white;
+    margin-top: 10px;
+}
+
+.attendance-cell:hover {
+    background-color: rgba(0, 0, 0, 0.03);
 }

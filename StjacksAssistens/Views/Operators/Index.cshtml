@@ -32,17 +32,27 @@
     </ul>
 </div>
 
-@* Filtros de Categoría *@
-<div class="mb-3">
-    <div class="btn-group" role="group">
-        <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod.Id" class="btn btn-outline-primary @(ViewBag.SelectedCategory == null ? "active" : "")">Todos</a>
+@* Filtros y Buscador alineados *@
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    @* Filtros de Categoría *@
+    <div class="btn-group shadow-sm" role="group">
+        <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod.Id"
+           class="btn btn-filter @(ViewBag.SelectedCategory == null ? "active" : "")">Todos</a>
         @foreach (var cat in ViewBag.Categories)
         {
             <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-periodId="@Model.CurrentPeriod.Id"
-               class="btn btn-outline-primary @(ViewBag.SelectedCategory == cat.Id ? "active" : "")">
-                @cat.Name
-            </a>
+               class="btn btn-filter @(ViewBag.SelectedCategory == (int?)cat.Id ? "active" : "")">@cat.Name</a>
         }
+    </div>
+
+    @* Nuevo Buscador Moderno *@
+    <div class="search-wrapper">
+        <div class="search-group">
+            <svg class="search-icon-svg" viewBox="0 0 512 512" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
+            </svg>
+            <input type="text" id="tableSearch" class="search-input" placeholder="Buscar por nombre o código...">
+        </div>
     </div>
 </div>
 
@@ -174,6 +184,25 @@
 
 @section Scripts {
     <script>
+        // 1. Lógica del Buscador (Debe estar fuera de cualquier función)
+        document.getElementById('tableSearch').addEventListener('keyup', function () {
+            let input = this.value.toLowerCase();
+            let rows = document.querySelectorAll('table tbody tr');
+
+            rows.forEach(row => {
+                // Columna 0: Código, Columna 1: Nombre
+                let code = row.cells[0].textContent.toLowerCase();
+                let name = row.cells[1].textContent.toLowerCase();
+
+                if (code.includes(input) || name.includes(input)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+
+        // 2. Lógica para cambiar estado (X, PP, etc.)
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC"];
             let currentStatus = cell.innerText.trim();
@@ -199,5 +228,23 @@
                 alert("Error al guardar la asistencia.");
             });
         }
+
+        // 3. Lógica para el menú desplegable de los 3 puntos
+        document.addEventListener('click', function (e) {
+            const button = e.target.closest('.menu-button');
+
+            if (button) {
+                const menu = button.nextElementSibling;
+                document.querySelectorAll('.card-menu.show').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                menu.classList.toggle('show');
+            }
+            else if (!e.target.closest('.dropdown-container')) {
+                document.querySelectorAll('.card-menu.show').forEach(m => {
+                    m.classList.remove('show');
+                });
+            }
+        });
     </script>
 }
