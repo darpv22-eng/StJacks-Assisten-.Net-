@@ -161,3 +161,71 @@
 .attendance-cell:hover {
     background-color: rgba(0, 0, 0, 0.03);
 }
+
+/* =========================================
+   5. MENÚ CONTEXTUAL PARA PERIODOS (CLIC DERECHO)
+   ========================================= */
+.context-menu {
+    display: none;
+    position: absolute;
+    z-index: 2000;
+    width: 160px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 6px 0;
+    border: 1px solid #e0e0e0;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu .item {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+    .context-menu .item svg {
+        color: #6c757d;
+    }
+
+    .context-menu .item:hover {
+        background-color: #f0f4ff;
+        color: #0d6efd;
+    }
+
+        .context-menu .item:hover svg {
+            color: #0d6efd;
+        }
+
+    .context-menu .item.delete-item:hover {
+        background-color: #fff1f2;
+        color: #dc3545;
+    }
+
+        .context-menu .item.delete-item:hover svg {
+            color: #dc3545;
+        }

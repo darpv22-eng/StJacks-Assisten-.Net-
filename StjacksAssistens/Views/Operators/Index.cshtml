@@ -5,10 +5,25 @@
 
 <link rel="stylesheet" href="~/css/operators.css" />
 
+<style>
+    .context-menu {
+        display: none;
+        position: absolute;
+        z-index: 9999;
+        background: white;
+        min-width: 160px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+</style>
+
+@* Encabezado con Botones *@
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Control de Asistencia</h1>
+    <h1 class="fw-bold">Control de Asistencia</h1>
     <div>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createPeriodModal">
+        @* Este botón abre el modal 'createPeriodModal' *@
+        <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#createPeriodModal">
             Nuevo Periodo
         </button>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOperatorModal">
@@ -17,14 +32,16 @@
     </div>
 </div>
 
-@* Navegación de Periodos (Pestañas superiores para que no estorben) *@
+@* Navegación de Periodos *@
 <div class="mb-4">
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs" id="periodTabs">
         @foreach (var p in (List<StjacksAssistens.Models.Periodss>)ViewBag.AllPeriods)
         {
             <li class="nav-item">
                 <a asp-action="Index" asp-route-periodId="@p.Id"
-                   class="nav-link @(Model.CurrentPeriod.Id == p.Id ? "active fw-bold" : "")">
+                   class="nav-link period-tab @(Model.CurrentPeriod?.Id == p.Id ? "active fw-bold" : "")"
+                   data-period-id="@p.Id"
+                   data-period-name="@p.Description">
                     @p.Description
                 </a>
             </li>
@@ -32,23 +49,21 @@
     </ul>
 </div>
 
-@* Filtros y Buscador alineados *@
+@* Filtros y Buscador *@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-    @* Filtros de Categoría *@
-    <div class="btn-group shadow-sm" role="group">
-        <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod.Id"
+    <div class="btn-group shadow-sm">
+        <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod?.Id"
            class="btn btn-filter @(ViewBag.SelectedCategory == null ? "active" : "")">Todos</a>
         @foreach (var cat in ViewBag.Categories)
         {
-            <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-periodId="@Model.CurrentPeriod.Id"
+            <a asp-action="Index" asp-route-categoryId="@cat.Id" asp-route-periodId="@Model.CurrentPeriod?.Id"
                class="btn btn-filter @(ViewBag.SelectedCategory == (int?)cat.Id ? "active" : "")">@cat.Name</a>
         }
     </div>
 
-    @* Nuevo Buscador Moderno *@
     <div class="search-wrapper">
         <div class="search-group">
-            <svg class="search-icon-svg" viewBox="0 0 512 512" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+            <svg class="search-icon-svg" viewBox="0 0 512 512" width="18" height="18">
                 <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
             </svg>
             <input type="text" id="tableSearch" class="search-input" placeholder="Buscar por nombre o código...">
@@ -56,8 +71,9 @@
     </div>
 </div>
 
+@* Tabla de Asistencia *@
 <div class="table-responsive">
-    <table class="table table-bordered align-middle text-center">
+    <table class="table table-bordered align-middle text-center mb-0">
         <thead class="table-light">
             <tr>
                 <th>CODIGO</th>
@@ -65,48 +81,39 @@
                 <th>CATEGORÍA</th>
                 @foreach (var day in Model.DaysInPeriod)
                 {
-                    <th style="min-width: 60px;">@day.ToString("dd-MMM")</th>
+                    <th style="min-width: 60px; font-size: 0.85rem;">@day.ToString("dd")<br />@day.ToString("MMM").ToUpper()</th>
                 }
-                <th></th>
+                <th>ACCIONES</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var row in Model.Rows)
             {
                 <tr>
-                    <td>@row.Code</td>
+                    <td class="fw-bold">@row.Code</td>
                     <td class="text-start">@row.Name</td>
                     <td><span class="badge bg-info text-dark">@row.CategoryName</span></td>
-
                     @foreach (var day in Model.DaysInPeriod)
                     {
-                        var status = string.IsNullOrEmpty(row.DailyStatus.GetValueOrDefault(day)) ? "X" : row.DailyStatus[day];
-
+                        var status = row.DailyStatus[day];
                         <td class="attendance-cell"
                             data-opid="@row.OperatorsId"
                             data-date="@day.ToString("yyyy-MM-dd")"
                             data-periodid="@Model.CurrentPeriod.Id"
                             onclick="toggleStatus(this)"
-                            style="cursor:pointer; font-weight:bold; user-select:none; @(status != "X" ? "color:red;" : "")">
+                            style="cursor:pointer; font-weight:800; user-select:none; color: @(status == "X" ? "#adb5bd" : "#dc3545")">
                             @status
                         </td>
                     }
-
                     <td>
                         <div class="dropdown-container">
-                            <button type="button" class="btn btn-sm btn-light menu-button">
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" /></svg>
-                            </button>
+                            <button type="button" class="btn btn-sm btn-light menu-button">⋮</button>
                             <div class="card-menu">
                                 <ul class="list">
                                     <li><a asp-action="Edit" asp-route-id="@row.OperatorsId" class="element">Editar</a></li>
-                                </ul>
-                                <div class="separator"></div>
-                                <ul class="list">
                                     <li>
-                                        <button type="button" class="element delete border-0 bg-transparent w-100"
-                                                data-bs-toggle="modal" data-bs-target="#deleteModal"
-                                                data-bs-id="@row.OperatorsId" data-bs-name="@row.Name">
+                                        <button type="button" class="element delete border-0 bg-transparent w-100 text-start"
+                                                onclick="confirmDeleteOperator(@row.OperatorsId, '@row.Name')">
                                             Eliminar
                                         </button>
                                     </li>
@@ -120,130 +127,124 @@
     </table>
 </div>
 
-@* MODAL: NUEVO PERIODO (Corregido para apuntar al controlador de Operarios) *@
+@* --- ELEMENTOS OCULTOS --- *@
+
+@* Menú Contextual Clic Derecho *@
+<div id="periodContextMenu" class="context-menu shadow">
+    <ul class="list-unstyled mb-0">
+        <li class="item p-2" onclick="openEditPeriodModal()" style="cursor:pointer;">✏️ Editar Nombre</li>
+        <li class="item p-2 delete-item" onclick="confirmDeletePeriod()" style="cursor:pointer; color: red;">🗑️ Eliminar Periodo</li>
+    </ul>
+</div>
+
+@* Modal CREAR Periodo (Restaurado) *@
 <div class="modal fade" id="createPeriodModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <form asp-controller="Operators" asp-action="CreatePeriod" method="post">
-                <div class="modal-header">
-                    <h5 class="modal-title">Nueva Catorcena</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <input name="Description" class="form-control" placeholder="Ej: 13 al 24 de Abril" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Fecha Inicio</label>
-                        <input type="date" name="StartDate" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Fecha Fin</label>
-                        <input type="date" name="EndDate" class="form-control" required />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Crear y Abrir Periodo</button>
-                </div>
-            </form>
-        </div>
+        <form asp-action="CreatePeriod" method="post" class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Nueva Catorcena</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Descripción</label><input name="Description" class="form-control" required placeholder="Ej: Abril C1" /></div>
+                <div class="mb-3"><label class="form-label">Fecha Inicio</label><input type="date" name="StartDate" class="form-control" required /></div>
+                <div class="mb-3"><label class="form-label">Fecha Fin</label><input type="date" name="EndDate" class="form-control" required /></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Periodo</button>
+            </div>
+        </form>
     </div>
 </div>
 
-@* MODAL: NUEVO OPERARIO *@
-<div class="modal fade" id="createOperatorModal" tabindex="-1">
+@* Modal EDITAR Periodo *@
+<div class="modal fade" id="editPeriodModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <form asp-action="Create" method="post">
-                <div class="modal-header"><h5>Nuevo Operario</h5></div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label>Código</label>
-                        <input name="Code" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label>Nombre</label>
-                        <input name="Name" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label>Categoría</label>
-                        <select name="CategoryId" class="form-control"
-                                asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))">
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
-        </div>
+        <form asp-action="EditPeriod" method="post" class="modal-content">
+            <input type="hidden" name="id" id="editPeriodId" />
+            <div class="modal-header"><h5>Editar Nombre del Periodo</h5></div>
+            <div class="modal-body">
+                <input name="Description" id="editPeriodDescription" class="form-control" required />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Actualizar</button>
+            </div>
+        </form>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // 1. Lógica del Buscador (Debe estar fuera de cualquier función)
+        let selectedPeriodId = null;
+        let selectedPeriodName = "";
+
+        // 1. Lógica Clic Derecho
+        document.addEventListener('contextmenu', function(e) {
+            const tab = e.target.closest('.period-tab');
+            if (tab) {
+                e.preventDefault();
+                selectedPeriodId = tab.getAttribute('data-period-id');
+                selectedPeriodName = tab.getAttribute('data-period-name');
+                const menu = document.getElementById('periodContextMenu');
+                menu.style.display = 'block';
+                menu.style.left = e.pageX + 'px';
+                menu.style.top = e.pageY + 'px';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#periodContextMenu')) {
+                document.getElementById('periodContextMenu').style.display = 'none';
+            }
+        });
+
+        // 2. Modales Periodos
+        function openEditPeriodModal() {
+            document.getElementById('editPeriodId').value = selectedPeriodId;
+            document.getElementById('editPeriodDescription').value = selectedPeriodName;
+            new bootstrap.Modal(document.getElementById('editPeriodModal')).show();
+        }
+
+        function confirmDeletePeriod() {
+            if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"?`)) {
+                window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
+            }
+        }
+
+        // 3. Buscador
         document.getElementById('tableSearch').addEventListener('keyup', function () {
             let input = this.value.toLowerCase();
-            let rows = document.querySelectorAll('table tbody tr');
-
-            rows.forEach(row => {
-                // Columna 0: Código, Columna 1: Nombre
-                let code = row.cells[0].textContent.toLowerCase();
-                let name = row.cells[1].textContent.toLowerCase();
-
-                if (code.includes(input) || name.includes(input)) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
+            document.querySelectorAll('table tbody tr').forEach(row => {
+                let text = row.cells[0].textContent + row.cells[1].textContent;
+                row.style.display = text.toLowerCase().includes(input) ? "" : "none";
             });
         });
 
-        // 2. Lógica para cambiar estado (X, PP, etc.)
+        // 4. AJAX Asistencia
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC"];
-            let currentStatus = cell.innerText.trim();
-
-            let nextIndex = (states.indexOf(currentStatus) + 1) % states.length;
-            let nextStatus = states[nextIndex];
-
-            const opId = cell.getAttribute("data-opid");
-            const date = cell.getAttribute("data-date");
-            const periodId = cell.getAttribute("data-periodid");
+            let current = cell.innerText.trim();
+            let next = states[(states.indexOf(current) + 1) % states.length];
 
             $.post('/Operators/UpdateAttendance', {
-                operatorId: opId,
-                date: date,
-                status: nextStatus,
-                periodId: periodId
-            })
-            .done(function(data) {
-                cell.innerText = nextStatus;
-                cell.style.color = (nextStatus === "X") ? "black" : "red";
-            })
-            .fail(function() {
-                alert("Error al guardar la asistencia.");
+                operatorId: cell.dataset.opid,
+                date: cell.dataset.date,
+                status: next,
+                periodId: cell.dataset.periodid
+            }).done(() => {
+                cell.innerText = next;
+                cell.style.color = (next === "X") ? "#adb5bd" : "#dc3545";
             });
         }
 
-        // 3. Lógica para el menú desplegable de los 3 puntos
+        // 5. Menú de 3 puntos (Acciones Tabla)
         document.addEventListener('click', function (e) {
             const button = e.target.closest('.menu-button');
-
             if (button) {
                 const menu = button.nextElementSibling;
-                document.querySelectorAll('.card-menu.show').forEach(m => {
-                    if (m !== menu) m.classList.remove('show');
-                });
+                document.querySelectorAll('.card-menu.show').forEach(m => { if (m !== menu) m.classList.remove('show'); });
                 menu.classList.toggle('show');
-            }
-            else if (!e.target.closest('.dropdown-container')) {
-                document.querySelectorAll('.card-menu.show').forEach(m => {
-                    m.classList.remove('show');
-                });
+            } else if (!e.target.closest('.dropdown-container')) {
+                document.querySelectorAll('.card-menu.show').forEach(m => m.classList.remove('show'));
             }
         });
     </script>
