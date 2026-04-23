@@ -18,11 +18,10 @@
     }
 </style>
 
-@* Encabezado con Botones *@
+@* --- ENCABEZADO Y BOTONES PRINCIPALES --- *@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="fw-bold">Control de Asistencia</h1>
     <div>
-        @* Este botón abre el modal 'createPeriodModal' *@
         <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#createPeriodModal">
             Nuevo Periodo
         </button>
@@ -32,7 +31,7 @@
     </div>
 </div>
 
-@* Navegación de Periodos *@
+@* --- NAVEGACIÓN DE PERIODOS --- *@
 <div class="mb-4">
     <ul class="nav nav-tabs" id="periodTabs">
         @foreach (var p in (List<StjacksAssistens.Models.Periodss>)ViewBag.AllPeriods)
@@ -49,7 +48,7 @@
     </ul>
 </div>
 
-@* Filtros y Buscador *@
+@* --- FILTROS Y BUSCADOR --- *@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div class="btn-group shadow-sm">
         <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod?.Id"
@@ -71,7 +70,7 @@
     </div>
 </div>
 
-@* Tabla de Asistencia *@
+@* --- TABLA DE ASISTENCIA --- *@
 <div class="table-responsive">
     <table class="table table-bordered align-middle text-center mb-0">
         <thead class="table-light">
@@ -127,7 +126,7 @@
     </table>
 </div>
 
-@* --- ELEMENTOS OCULTOS --- *@
+@* --- ELEMENTOS OCULTOS (MENÚS Y MODALES) --- *@
 
 @* Menú Contextual Clic Derecho *@
 <div id="periodContextMenu" class="context-menu shadow">
@@ -137,11 +136,52 @@
     </ul>
 </div>
 
-@* Modal CREAR Periodo (Restaurado) *@
+@* Modal CREAR OPERARIO (RESTAURADO) *@
+<div class="modal fade" id="createOperatorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="Create" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar Nuevo Operario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Código</label>
+                    <input name="Code" class="form-control" required placeholder="Ej: OP-001" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nombre Completo</label>
+                    <input name="Name" class="form-control" required placeholder="Nombre del operario" />
+                </div>
+                @* Busca esta parte en tu modal #createOperatorModal *@
+                <div class="mb-3">
+                    <label class="form-label">Categoría</label>
+                    @* Cambiamos CategoriesId por CategoryId *@
+                    <select name="CategoryId" class="form-select" required>
+                        <option value="">Seleccione una categoría...</option>
+                        @foreach (var cat in ViewBag.Categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Operario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Modal CREAR Periodo *@
 <div class="modal fade" id="createPeriodModal" tabindex="-1">
     <div class="modal-dialog">
         <form asp-action="CreatePeriod" method="post" class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Nueva Catorcena</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Catorcena</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label">Descripción</label><input name="Description" class="form-control" required placeholder="Ej: Abril C1" /></div>
                 <div class="mb-3"><label class="form-label">Fecha Inicio</label><input type="date" name="StartDate" class="form-control" required /></div>
@@ -177,7 +217,7 @@
         let selectedPeriodId = null;
         let selectedPeriodName = "";
 
-        // 1. Lógica Clic Derecho
+        // 1. Lógica Clic Derecho en Periodos
         document.addEventListener('contextmenu', function(e) {
             const tab = e.target.closest('.period-tab');
             if (tab) {
@@ -197,7 +237,7 @@
             }
         });
 
-        // 2. Modales Periodos
+        // 2. Funciones de Periodos
         function openEditPeriodModal() {
             document.getElementById('editPeriodId').value = selectedPeriodId;
             document.getElementById('editPeriodDescription').value = selectedPeriodName;
@@ -210,7 +250,7 @@
             }
         }
 
-        // 3. Buscador
+        // 3. Buscador en Tiempo Real
         document.getElementById('tableSearch').addEventListener('keyup', function () {
             let input = this.value.toLowerCase();
             document.querySelectorAll('table tbody tr').forEach(row => {
@@ -219,7 +259,7 @@
             });
         });
 
-        // 4. AJAX Asistencia
+        // 4. AJAX Actualización de Asistencia
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC"];
             let current = cell.innerText.trim();
@@ -236,7 +276,7 @@
             });
         }
 
-        // 5. Menú de 3 puntos (Acciones Tabla)
+        // 5. Menú Desplegable de Acciones (3 puntos)
         document.addEventListener('click', function (e) {
             const button = e.target.closest('.menu-button');
             if (button) {
@@ -247,5 +287,12 @@
                 document.querySelectorAll('.card-menu.show').forEach(m => m.classList.remove('show'));
             }
         });
+
+        // 6. Confirmación de Eliminar Operario
+        function confirmDeleteOperator(id, name) {
+            if (confirm(`¿Estás seguro de que deseas eliminar al operario "${name}"?`)) {
+                window.location.href = `/Operators/Delete/${id}`;
+            }
+        }
     </script>
 }
