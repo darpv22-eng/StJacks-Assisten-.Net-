@@ -3,21 +3,17 @@ using Microsoft.EntityFrameworkCore;
 using StjacksAssistens.Data;
 using StjacksAssistens.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
-
 namespace StjacksAssistens.Controllers
 {
     public class OperatorsController : Controller
     {
         private readonly ApplicationDbContext _context;
-
         public OperatorsController(ApplicationDbContext context)
         {
             _context = context;
         }
-
         public async Task<IActionResult> Index(int? periodId, int? categoryId)
         {
-            // 1. Obtener periodo (seleccionado, el último o null)
             var period = periodId.HasValue
                 ? await _context.Periodss.FindAsync(periodId)
                 : await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
@@ -35,25 +31,19 @@ namespace StjacksAssistens.Controllers
                     Rows = new List<OperatorAttendanceRow>()
                 });
             }
-
-            // 2. Generar días laborales (Lunes a Viernes)
             var days = new List<DateTime>();
-            for (var dt = period.StartDate; dt <= period.EndDate; dt = dt.AddDays(1))
+            for (var dt = period.StartDate.Date; dt <= period.EndDate.Date; dt = dt.AddDays(1))
             {
                 if (dt.DayOfWeek != DayOfWeek.Saturday && dt.DayOfWeek != DayOfWeek.Sunday)
                     days.Add(dt);
             }
-
-            // 3. Consulta de Operarios
             var query = _context.Operators.Include(o => o.Category).AsQueryable();
             if (categoryId.HasValue) query = query.Where(o => o.CategoryId == categoryId);
             var operators = await query.ToListAsync();
 
-            // 4. Asistencia del periodo
             var allAttendance = await _context.Attendence
                 .Where(a => a.PeriodId == period.Id)
                 .ToListAsync();
-
             var model = new AttendanceViewModel
             {
                 CurrentPeriod = period,
@@ -66,20 +56,24 @@ namespace StjacksAssistens.Controllers
                     CategoryName = o.Category?.Name,
                     DailyStatus = days.ToDictionary(
                         d => d,
-                        d => allAttendance.FirstOrDefault(a => a.OperatorsId == o.Id && a.AttendanceDate.Date == d.Date)?.Status ?? "X"
+                        d => allAttendance.FirstOrDefault(a =>
+                            a.OperatorsId == o.Id &&
+                            a.AttendanceDate.Date == d.Date
+                        )?.Status ?? "X" // <-- Siempre "X" por defecto
                     )
                 }).ToList()
             };
 
+            ViewBag.CurrentPeriodId = period.Id;
             return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
         {
-            var attendanceDate = DateTime.Parse(date);
+            var attendanceDate = DateTime.Parse(date).Date;
             var attendance = await _context.Attendence
-                .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate.Date && a.PeriodId == periodId);
+                .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate && a.PeriodId == periodId);
 
             if (attendance == null)
             {
@@ -139,80 +133,21 @@ namespace StjacksAssistens.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(Operators op)
         {
-            try
-            {
-                // Forzamos que el ModelState sea válido o simplemente intentamos guardar
-                _context.Add(op);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                // Si hay error, puedes usar un TempData para avisar al usuario
-                TempData["Error"] = "Error al crear: Verifique que la categoría sea válida.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-            var operatorModel = await _context.Operators.FindAsync(id);
-            if (operatorModel == null) return NotFound();
-            return View(operatorModel);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Operators operatorModel)
-        {
-            if (id != operatorModel.Id) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(operatorModel);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OperatorExists(operatorModel.Id)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(operatorModel);
-        }
-
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-            var operatorModel = await _context.Operators
-                .Include(o => o.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (operatorModel == null) return NotFound();
-            return View(operatorModel);
-        }
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var operatorModel = await _context.Operators.FindAsync(id);
-            if (operatorModel != null)
-            {
-                _context.Operators.Remove(operatorModel);
-                await _context.SaveChangesAsync();
-            }
+            _context.Add(op);
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool OperatorExists(int id)
+        [HttpPost]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            return _context.Operators.Any(e => e.Id == id);
+            var op = await _context.Operators.FindAsync(id);
+            if (op != null)
+            {
+                _context.Operators.Remove(op);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }
