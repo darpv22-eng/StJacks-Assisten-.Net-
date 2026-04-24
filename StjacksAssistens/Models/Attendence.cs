@@ -15,6 +15,7 @@ namespace StjacksAssistens.Models
         public int OperatorsId { get; set; }
         public DateTime AttendanceDate { get; set; }
         public string Status { get; set; } // X, PP, INC, ISSS
+        public string? Observation { get; set; }
 
         [ForeignKey("PeriodId")]
         public virtual Periodss? Period { get; set; }

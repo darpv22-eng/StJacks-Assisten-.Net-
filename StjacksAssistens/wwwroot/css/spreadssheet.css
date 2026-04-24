@@ -1,0 +1,48 @@
+﻿body {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    background-color: white;
+}
+
+.table-excel {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid black;
+}
+
+    .table-excel th, .table-excel td {
+        border: 1px solid black;
+        padding: 4px;
+        text-align: center;
+    }
+
+.header-purple {
+    background-color: #e2e2f0;
+    font-weight: bold;
+}
+
+.text-start {
+    text-align: left !important;
+}
+
+.signature-section {
+    margin-top: 50px;
+}
+
+.signature-line {
+    border-top: 1px solid black;
+    width: 200px;
+    margin: 0 auto;
+    padding-top: 5px;
+}
+
+@media print {
+    .no-print {
+        display: none;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+}

@@ -1,0 +1,103 @@
+﻿@model MecanicosReportViewModel
+@{
+    Layout = null; // Sin barra de navegación para que salga limpia la impresión
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reporte de Ausentismo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/css/spreadssheet.css" />
+</head>
+<body class="p-4">
+
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold">REPORTE DE AUSENTISMO</span>
+    </div>
+
+    <table class="table-excel mb-4">
+        <tr class="header-purple">
+            <td style="width: 50px;">CDC</td>
+            <td>Nombre del Área, Depto. o Gerencia</td>
+            <td style="width: 120px;">Tipo de Planilla</td>
+            <td style="width: 300px;">Período de Pago</td>
+        </tr>
+        <tr>
+            <td>409</td>
+            <td>MANTENIMIENTO (MECÁNICOS)</td>
+            <td>14 Días</td>
+            <td>Del @Model.Periodo.StartDate.ToString("dd MMMM") al @Model.Periodo.EndDate.ToString("dd MMMM yyyy")</td>
+        </tr>
+    </table>
+
+    <table class="table-excel">
+        <thead>
+            <tr class="header-purple">
+                <th rowspan="2">No.</th>
+                <th rowspan="2">Código</th>
+                <th rowspan="2">Nombre del Empleado</th>
+                <th colspan="5">Días de la Semana</th>
+                <th rowspan="2">Motivo de la Ausencia</th>
+            </tr>
+            <tr class="header-purple">
+                <th>Lunes</th>
+                <th>Martes</th>
+                <th>Miércoles</th>
+                <th>Jueves</th>
+                <th>Viernes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int count = 1;
+            }
+            @foreach (var emp in Model.Empleados)
+            {
+                <tr>
+                    <td rowspan="2">@count</td>
+                    <td rowspan="2">@emp.Codigo</td>
+                    <td rowspan="2" class="text-start">@emp.Nombre</td>
+                    <td>@(emp.Semanas[0].Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td class="text-start small">@emp.Semanas[0].Motivo</td>
+                </tr>
+                <tr>
+                    <td>@(emp.Semanas[1].Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td class="text-start small">@emp.Semanas[1].Motivo</td>
+                </tr>
+                count++;
+            }
+        </tbody>
+    </table>
+
+    <div class="row signature-section text-center">
+        <div class="col-4">
+            <div class="signature-line">Elaborado por:</div>
+            <small>Digitador</small>
+        </div>
+        <div class="col-4">
+            <div class="signature-line">Revisado por:</div>
+            <small>Jefe de Confección y Empaque</small>
+        </div>
+        <div class="col-4">
+            <div class="signature-line">Autorizado por:</div>
+            <small>Directora de Producción</small>
+        </div>
+    </div>
+
+    <div class="mt-4 no-print text-center">
+        <button onclick="window.print()" class="btn btn-primary">Imprimir Reporte</button>
+        <a href="javascript:history.back()" class="btn btn-secondary">Regresar</a>
+    </div>
+
+</body>
+</html>

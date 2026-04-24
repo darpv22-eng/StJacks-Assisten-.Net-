@@ -1,6 +1,68 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Normativa y Seguridad";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-primary p-4 border-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-25 rounded-3 p-2">
+                            <i class="bi bi-shield-lock text-white fs-3"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-white fw-bold mb-0">Políticas del Sistema</h2>
+                            <p class="text-white-50 mb-0 small">StjacksAssistens - Control de Operarios</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+
+                    <section class="mb-5">
+                        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-check me-2"></i>Uso de Datos de Asistencia</h5>
+                        <p class="text-muted">
+                            Toda la información registrada en este portal (asistencias, permisos e incapacidades) es para uso exclusivo administrativo de la planta.
+                            El acceso a estos datos está restringido según el rol del usuario asignado.
+                        </p>
+                    </section>
+
+                    <section class="mb-5">
+                        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-clock-history me-2"></i>Responsabilidad del Registro</h5>
+                        <ul class="list-group list-group-flush border-start border-primary border-3 ms-2">
+                            <li class="list-group-item border-0 py-2">Solo el personal autorizado puede modificar estados de periodos anteriores.</li>
+                            <li class="list-group-item border-0 py-2">Cada cambio queda registrado con la fecha y hora de actualización.</li>
+                            <li class="list-group-item border-0 py-2">Los reportes generados tienen validez oficial para el departamento de nóminas.</li>
+                        </ul>
+                    </section>
+
+                    <section class="mb-4">
+                        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Soporte Técnico</h5>
+                        <div class="bg-light p-3 rounded-3 d-flex align-items-center justify-content-between">
+                            <span class="text-secondary small">¿Problemas con el sistema? Contacta al desarrollador</span>
+                            <a href="mailto:soporte@stjacks.com" class="btn btn-sm btn-outline-primary">Enviar Correo</a>
+                        </div>
+                    </section>
+
+                </div>
+                <div class="card-footer bg-white border-0 text-center pb-4">
+                    <p class="text-muted small mb-0">&copy; @DateTime.Now.Year - St. Jacks El Salvador</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        border-radius: 15px;
+    }
+
+    .list-group-item {
+        background-color: transparent;
+        color: #6c757d;
+    }
+</style>

@@ -26,6 +26,7 @@
         --warning-color: #f59e0b;
         --info-color: #06b6d4;
     }
+
     .context-menu {
         display: none;
         position: absolute;
@@ -48,6 +49,7 @@
                 background: #f8f9fa;
                 color: var(--primary-color);
             }
+
     .table-container {
         background: white;
         border-radius: 15px;
@@ -64,6 +66,7 @@
             background-color: rgba(67, 97, 238, 0.05);
             transform: scale(1.1);
         }
+
     .stat-card {
         background: white;
         border-radius: 12px;
@@ -106,6 +109,7 @@
             display: block;
         }
 </style>
+
 <div class="row align-items-center mb-4">
     <div class="col-md-6">
         <h1 class="fw-bold m-0">Control de Asistencia</h1>
@@ -123,6 +127,7 @@
         </button>
     </div>
 </div>
+
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-lg-2">
         <div class="stat-card shadow-sm">
@@ -141,7 +146,7 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card shadow-sm">
+        <div class="stat-card shadow-sm" onclick="showStatusDetails('PP', 'Permisos Hoy', 'bg-warning')" style="cursor:pointer">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-warning text-white"><i class="bi bi-envelope-paper"></i></div>
                 <div><small class="text-muted d-block">Permisos (PP)</small><span class="fw-bold h5">@totalPP</span></div>
@@ -149,7 +154,7 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card shadow-sm">
+        <div class="stat-card shadow-sm" onclick="showStatusDetails('ISS', 'Personal en ISSS', 'bg-info')" style="cursor:pointer">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-info text-white"><i class="bi bi-hospital"></i></div>
                 <div><small class="text-muted d-block">ISSS</small><span class="fw-bold h5">@totalISS</span></div>
@@ -157,7 +162,7 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card shadow-sm">
+        <div class="stat-card shadow-sm" onclick="showStatusDetails('INC', 'Incapacitados', 'bg-danger')" style="cursor:pointer">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-danger text-white"><i class="bi bi-exclamation-triangle"></i></div>
                 <div><small class="text-muted d-block">Incap. (INC)</small><span class="fw-bold h5">@totalINC</span></div>
@@ -173,6 +178,7 @@
         </div>
     </div>
 </div>
+
 <div class="mb-4">
     <ul class="nav nav-tabs border-0 gap-2">
         @foreach (var p in (List<StjacksAssistens.Models.Periodss>)ViewBag.AllPeriods)
@@ -187,6 +193,7 @@
         }
     </ul>
 </div>
+
 <div class="row mb-4 align-items-center">
     <div class="col-lg-6">
         <div class="btn-group shadow-sm bg-white p-1 rounded-3 border">
@@ -202,6 +209,7 @@
         <input type="text" id="tableSearch" class="form-control border-0 shadow-sm rounded-3 w-50 ms-auto" placeholder="🔍 Buscar por nombre o código...">
     </div>
 </div>
+
 <div class="table-container">
     <div class="table-responsive">
         <table class="table table-hover align-middle text-center">
@@ -253,10 +261,12 @@
         </table>
     </div>
 </div>
+
 <div id="periodContextMenu" class="context-menu shadow-lg border">
     <div class="item" onclick="openEditPeriodModal()"><i class="bi bi-pencil me-2"></i> Editar nombre</div>
     <div class="item text-danger" onclick="confirmDeletePeriod()"><i class="bi bi-trash me-2"></i> Eliminar periodo</div>
 </div>
+
 <div class="modal fade" id="editPeriodModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -273,6 +283,7 @@
         </div>
     </div>
 </div>
+
 <div class="modal fade" id="createPeriodModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -290,6 +301,7 @@
         </div>
     </div>
 </div>
+
 <div class="modal fade" id="createOperatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -322,9 +334,29 @@
     </div>
 </div>
 
+<div class="modal fade" id="statusDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div id="statusModalHeader" class="modal-header text-white">
+                <h5 class="modal-title fw-bold" id="statusModalTitle">Listado de Personal</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="list-group list-group-flush" id="statusDetailsList"></div>
+                <div id="emptyStatusMsg" class="p-4 text-center d-none">
+                    <i class="bi bi-info-circle fs-2 text-muted"></i>
+                    <p class="text-muted mt-2">No hay operarios en este estado hoy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         let selectedPeriodId = null, selectedPeriodName = "";
+
+        // Context Menu Logic
         document.addEventListener('contextmenu', e => {
             const tab = e.target.closest('.period-tab');
             if (tab) {
@@ -353,6 +385,7 @@
                 window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
         }
 
+        // Attendance Toggle Logic
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC"];
             let current = cell.innerText.trim();
@@ -370,12 +403,16 @@
                 else cell.style.color = "#ef4444";
             });
         }
+
+        // Search Logic
         document.getElementById('tableSearch').addEventListener('keyup', function() {
             let val = this.value.toLowerCase();
             document.querySelectorAll('tbody tr').forEach(tr => {
                 tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
             });
         });
+
+        // Dropdown Menu Logic
         document.addEventListener('click', e => {
             const btn = e.target.closest('.menu-button');
             document.querySelectorAll('.card-menu.show').forEach(m => m.classList.remove('show'));
@@ -390,6 +427,59 @@
                 document.body.appendChild(form);
                 form.submit();
             }
+        }
+
+        // NUEVA FUNCIÓN PARA MOSTRAR DETALLES DE LAS TARJETAS
+        function showStatusDetails(statusCode, title, headerClass) {
+            const listContainer = document.getElementById('statusDetailsList');
+            const emptyMsg = document.getElementById('emptyStatusMsg');
+            const modalHeader = document.getElementById('statusModalHeader');
+
+            listContainer.innerHTML = '';
+            document.getElementById('statusModalTitle').innerText = title;
+            modalHeader.className = 'modal-header text-white ' + headerClass;
+
+            // Fecha de hoy para comparar con data-date
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            let foundCount = 0;
+
+            document.querySelectorAll('tbody tr').forEach(tr => {
+                const cell = tr.querySelector(`.attendance-cell[data-date="${todayStr}"]`);
+
+                if (cell && cell.innerText.trim() === statusCode) {
+                    const opName = tr.querySelector('.fw-semibold').innerText;
+                    const opArea = tr.querySelector('.text-muted.small').innerText;
+                    const opCode = tr.querySelector('.text-secondary').innerText;
+
+                    const item = `
+                        <div class="list-group-item p-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">${opName}</h6>
+                                    <small class="text-muted">${opCode} | ${opArea}</small>
+                                </div>
+                                <span class="badge rounded-pill ${headerClass}">${statusCode}</span>
+                            </div>
+                        </div>`;
+                    listContainer.innerHTML += item;
+                    foundCount++;
+                }
+            });
+
+            if (foundCount === 0) {
+                emptyMsg.classList.remove('d-none');
+                listContainer.classList.add('d-none');
+            } else {
+                emptyMsg.classList.add('d-none');
+                listContainer.classList.remove('d-none');
+            }
+
+            new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
         }
     </script>
 }

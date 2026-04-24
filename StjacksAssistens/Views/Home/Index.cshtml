@@ -15,8 +15,6 @@
         min-height: 100vh;
         padding: 2rem 1rem;
     }
-
-    /* Efecto Neumorfismo Suave */
     .premium-card {
         background: #ffffff;
         border: none;
@@ -39,14 +37,10 @@
         border-radius: 1rem;
         font-size: 1.5rem;
     }
-
-    /* Estilo para el gráfico */
     .chart-wrapper {
         height: 350px;
         width: 100%;
     }
-
-    /* Alertas Flotantes */
     .alert-indicator {
         width: 10px;
         height: 10px;
@@ -54,8 +48,6 @@
         display: inline-block;
         margin-right: 8px;
     }
-
-    /* Gradientes para iconos */
     .bg-grad-primary {
         background: linear-gradient(135deg, #4361ee, #4895ef);
     }
@@ -84,11 +76,10 @@
 </style>
 
 <div class="dashboard-container">
-    @* --- HEADER --- *@
     <div class="row mb-4 align-items-end">
         <div class="col-md-7">
             <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-2">Sistema v2.0.1</span>
-            <h1 class="fw-bold display-6 mb-1">St. Jacks <span class="text-primary">Intelligence</span></h1>
+            <h1 class="fw-bold display-6 mb-1">St. Jacks <span class="text-primary"> </span></h1>
             <p class="text-muted">Análisis de rendimiento y control de personal en tiempo real.</p>
         </div>
         <div class="col-md-5 text-md-end">
@@ -101,8 +92,6 @@
             </div>
         </div>
     </div>
-
-    @* --- METRICAS PRINCIPALES --- *@
     <div class="row g-4 mb-4">
         <div class="col-md-3">
             <div class="card premium-card p-4">
@@ -120,7 +109,7 @@
             <div class="card premium-card p-4">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-muted small fw-bold">ASISTENCIA HOY</h6>
+                        <h6 class="text-muted small fw-bold">AUSENTISMO</h6>
                         <h2 class="fw-bold mb-0">94.2%</h2>
                         <span class="text-primary small fw-bold">121/128 presentes</span>
                     </div>
@@ -141,20 +130,20 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card premium-card p-4">
+            <a asp-controller="Spreadsheet" asp-action="Index" class="card premium-card p-4 text-decoration-none shadow-sm h-100">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-muted small fw-bold">ESTADO SISTEMA</h6>
-                        <h2 class="fw-bold mb-0">Óptimo</h2>
-                        <span class="text-success small fw-bold"><i class="alert-indicator bg-success"></i> Sincronizado</span>
+                        <h6 class="text-muted small fw-bold">GESTIÓN DE PAGOS</h6>
+                        <h2 class="fw-bold mb-0 text-dark">Planilla</h2>
+                        <span class="text-primary small fw-bold">Ir a cálculos <i class="bi bi-arrow-right-short"></i></span>
                     </div>
-                    <div class="icon-shape bg-light text-success border"><i class="bi bi-cpu"></i></div>
+                    <div class="icon-shape bg-light text-success border" style="background-color: #e8f5e9 !important; border-color: #c8e6c9 !important;">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
-
-    @* --- SECCIÓN CENTRAL (Gráfico y Alertas) --- *@
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card premium-card p-4 h-100">
@@ -215,28 +204,21 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Reloj en tiempo real
         function updateClock() {
             const now = new Date();
             document.getElementById('current-time').innerText = now.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
         setInterval(updateClock, 1000);
         updateClock();
-
-        // Gráfico Premium
         const ctx = document.getElementById('mainDashboardChart').getContext('2d');
         const primaryColor = '#4361ee';
         const secondaryColor = '#4cc9f0';
-
-        // Degradados
         const fillGradient = ctx.createLinearGradient(0, 0, 0, 300);
         fillGradient.addColorStop(0, 'rgba(67, 97, 238, 0.2)');
         fillGradient.addColorStop(1, 'rgba(67, 97, 238, 0)');
-
         new Chart(ctx, {
             type: 'line',
             data: {
