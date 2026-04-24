@@ -1,4 +1,4 @@
-﻿@model MecanicosReportViewModel
+﻿@* @model MecanicosReportViewModel
 @{
     Layout = null; // Sin barra de navegación para que salga limpia la impresión
 }
@@ -81,15 +81,15 @@
 
     <div class="row signature-section text-center">
         <div class="col-4">
-            <div class="signature-line">Elaborado por:</div>
+            <div class="signature-line">Elaborado por:Willian Alexander</div>
             <small>Digitador</small>
         </div>
         <div class="col-4">
-            <div class="signature-line">Revisado por:</div>
+            <div class="signature-line">Revisado por:Luis Barahona</div>
             <small>Jefe de Confección y Empaque</small>
         </div>
         <div class="col-4">
-            <div class="signature-line">Autorizado por:</div>
+            <div class="signature-line">Autorizado por:Jhoana Quiñonez</div>
             <small>Directora de Producción</small>
         </div>
     </div>
@@ -97,6 +97,136 @@
     <div class="mt-4 no-print text-center">
         <button onclick="window.print()" class="btn btn-primary">Imprimir Reporte</button>
         <a href="javascript:history.back()" class="btn btn-secondary">Regresar</a>
+    </div>
+</body>
+</html> *@
+@model MecanicosReportViewModel
+@{
+    Layout = null;
+    var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Ausentismo - @Model.Periodo.Description</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/spreadssheet.css" />
+
+</head>
+<body class="p-4">
+
+    <div class="no-print filter-panel p-3 mb-4 shadow-sm rounded">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <label class="fw-bold small text-muted"><i class="bi bi-calendar3"></i> Seleccionar Periodo Histórico:</label>
+                <select class="form-select form-select-sm" onchange="location.href='/Ausentismo/ReporteMecanicos?periodId=' + this.value">
+                    @foreach (var p in listaPeriodos)
+                    {
+                        <!option value="@p.Id" @(p.Id == Model.Periodo.Id ? "selected" : "")>
+                        @p.Description (Del @p.StartDate.ToShortDateString() al @p.EndDate.ToShortDateString())
+                        </!option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-7 text-end">
+                <button onclick="window.print()" class="btn btn-dark btn-sm">
+                    <i class="bi bi-printer"></i> Imprimir Documento
+                </button>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Regresar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO</span>
+    </div>
+
+    <table class="table-excel">
+        <tr class="header-purple">
+            <td style="width: 10%;">CDC</td>
+            <td style="width: 40%;">Nombre del Área, Depto. o Gerencia</td>
+            <td style="width: 20%;">Tipo de Planilla</td>
+            <td style="width: 30%;">Período de Pago</td>
+        </tr>
+        <tr>
+            <td>409</td>
+            <td>MANTENIMIENTO (MECÁNICOS)</td>
+            <td>14 Días (Catorcenal)</td>
+            <td class="fw-bold">Del @Model.Periodo.StartDate.ToString("dd/MM/yyyy") al @Model.Periodo.EndDate.ToString("dd/MM/yyyy")</td>
+        </tr>
+    </table>
+
+    <table class="table-excel">
+        <thead>
+            <tr class="header-purple">
+                <th rowspan="2" style="width: 30px;">No.</th>
+                <th rowspan="2" style="width: 60px;">Código</th>
+                <th rowspan="2">Nombre del Empleado</th>
+                <th colspan="5">Días de la Semana</th>
+                <th rowspan="2">Motivo de la Ausencia / Observaciones</th>
+            </tr>
+            <tr class="header-purple">
+                <th style="width: 65px;">Lunes</th>
+                <th style="width: 65px;">Martes</th>
+                <th style="width: 65px;">Miércoles</th>
+                <th style="width: 65px;">Jueves</th>
+                <th style="width: 65px;">Viernes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int count = 1;
+            }
+            @foreach (var emp in Model.Empleados)
+            {
+                <tr>
+                    <td rowspan="2">@count</td>
+                    <td rowspan="2" class="fw-bold">@emp.Codigo</td>
+                    <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
+                    <td>@(emp.Semanas[0].Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[0].Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td class="text-start small italic">@emp.Semanas[0].Motivo</td>
+                </tr>
+                <tr>
+                    <td>@(emp.Semanas[1].Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(emp.Semanas[1].Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td class="text-start small italic">@emp.Semanas[1].Motivo</td>
+                </tr>
+                count++;
+            }
+        </tbody>
+    </table>
+
+    <div class="container-fluid signature-section text-center">
+        <div class="row">
+            <div class="col-4">
+                <div class="signature-line"></div>
+                <div class="fw-bold small">Elaborado por:</div>
+                <div class="small">Digitador de Planilla</div>
+            </div>
+            <div class="col-4">
+                <div class="signature-line"></div>
+                <div class="fw-bold small">Revisado por:</div>
+                <div class="small">Jefe de Mantenimiento</div>
+            </div>
+            <div class="col-4">
+                <div class="signature-line"></div>
+                <div class="fw-bold small">Autorizado por:</div>
+                <div class="small">Recursos Humanos</div>
+            </div>
+        </div>
     </div>
 
 </body>
