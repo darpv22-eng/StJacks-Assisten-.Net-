@@ -1,106 +1,4 @@
-﻿@* @model MecanicosReportViewModel
-@{
-    Layout = null; // Sin barra de navegación para que salga limpia la impresión
-}
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Reporte de Ausentismo</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="~/css/spreadssheet.css" />
-</head>
-<body class="p-4">
-
-    <div class="d-flex justify-content-between mb-2">
-        <span class="fw-bold">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
-        <span class="fw-bold">REPORTE DE AUSENTISMO</span>
-    </div>
-
-    <table class="table-excel mb-4">
-        <tr class="header-purple">
-            <td style="width: 50px;">CDC</td>
-            <td>Nombre del Área, Depto. o Gerencia</td>
-            <td style="width: 120px;">Tipo de Planilla</td>
-            <td style="width: 300px;">Período de Pago</td>
-        </tr>
-        <tr>
-            <td>409</td>
-            <td>MANTENIMIENTO (MECÁNICOS)</td>
-            <td>14 Días</td>
-            <td>Del @Model.Periodo.StartDate.ToString("dd MMMM") al @Model.Periodo.EndDate.ToString("dd MMMM yyyy")</td>
-        </tr>
-    </table>
-
-    <table class="table-excel">
-        <thead>
-            <tr class="header-purple">
-                <th rowspan="2">No.</th>
-                <th rowspan="2">Código</th>
-                <th rowspan="2">Nombre del Empleado</th>
-                <th colspan="5">Días de la Semana</th>
-                <th rowspan="2">Motivo de la Ausencia</th>
-            </tr>
-            <tr class="header-purple">
-                <th>Lunes</th>
-                <th>Martes</th>
-                <th>Miércoles</th>
-                <th>Jueves</th>
-                <th>Viernes</th>
-            </tr>
-        </thead>
-        <tbody>
-            @{
-                int count = 1;
-            }
-            @foreach (var emp in Model.Empleados)
-            {
-                <tr>
-                    <td rowspan="2">@count</td>
-                    <td rowspan="2">@emp.Codigo</td>
-                    <td rowspan="2" class="text-start">@emp.Nombre</td>
-                    <td>@(emp.Semanas[0].Lunes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Martes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Miercoles?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Jueves?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Viernes?.ToString("dd-MMM") ?? "")</td>
-                    <td class="text-start small">@emp.Semanas[0].Motivo</td>
-                </tr>
-                <tr>
-                    <td>@(emp.Semanas[1].Lunes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Martes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Miercoles?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Jueves?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Viernes?.ToString("dd-MMM") ?? "")</td>
-                    <td class="text-start small">@emp.Semanas[1].Motivo</td>
-                </tr>
-                count++;
-            }
-        </tbody>
-    </table>
-
-    <div class="row signature-section text-center">
-        <div class="col-4">
-            <div class="signature-line">Elaborado por:Willian Alexander</div>
-            <small>Digitador</small>
-        </div>
-        <div class="col-4">
-            <div class="signature-line">Revisado por:Luis Barahona</div>
-            <small>Jefe de Confección y Empaque</small>
-        </div>
-        <div class="col-4">
-            <div class="signature-line">Autorizado por:Jhoana Quiñonez</div>
-            <small>Directora de Producción</small>
-        </div>
-    </div>
-
-    <div class="mt-4 no-print text-center">
-        <button onclick="window.print()" class="btn btn-primary">Imprimir Reporte</button>
-        <a href="javascript:history.back()" class="btn btn-secondary">Regresar</a>
-    </div>
-</body>
-</html> *@
-@model MecanicosReportViewModel
+﻿@model MecanicosReportViewModel
 @{
     Layout = null;
     var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
@@ -114,22 +12,28 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
-
 </head>
 <body class="p-4">
 
     <div class="no-print filter-panel p-3 mb-4 shadow-sm rounded">
         <div class="row align-items-center">
-            <div class="col-md-5">
-                <label class="fw-bold small text-muted"><i class="bi bi-calendar3"></i> Seleccionar Periodo Histórico:</label>
-                <select class="form-select form-select-sm" onchange="location.href='/Ausentismo/ReporteMecanicos?periodId=' + this.value">
+            <div class="col-md-5 position-relative">
+                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Digite fecha o nombre del periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm"
+                       placeholder="Ej: 2026 o Catorcena..." autocomplete="off">
+
+                <div id="periodSearchResults" class="search-results-container" style="display: none;">
                     @foreach (var p in listaPeriodos)
                     {
-                        <!option value="@p.Id" @(p.Id == Model.Periodo.Id ? "selected" : "")>
-                        @p.Description (Del @p.StartDate.ToShortDateString() al @p.EndDate.ToShortDateString())
-                        </!option>
+                        <div class="search-item"
+                             style="display: none;"
+                             data-id="@p.Id"
+                             data-filter="@p.Description.ToLower() @p.StartDate.ToString("dd/MM/yyyy") @p.EndDate.ToString("dd/MM/yyyy")">
+                            <strong>@p.Description</strong><br>
+                            <span class="text-muted small">Rango: @p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString()</span>
+                        </div>
                     }
-                </select>
+                </div>
             </div>
             <div class="col-md-7 text-end">
                 <button onclick="window.print()" class="btn btn-dark btn-sm">
@@ -182,29 +86,55 @@
         <tbody>
             @{
                 int count = 1;
+                // Filtramos: Solo mecánicos que tengan alguna fecha registrada (ausencia)
+                // en cualquiera de las dos semanas.
+                var empleadosConAusencias = Model.Empleados.Where(emp =>
+                emp.Semanas.Any(s =>
+                s.Lunes.HasValue ||
+                s.Martes.HasValue ||
+                s.Miercoles.HasValue ||
+                s.Jueves.HasValue ||
+                s.Viernes.HasValue
+                )
+                ).ToList();
             }
-            @foreach (var emp in Model.Empleados)
+
+            @if (!empleadosConAusencias.Any())
             {
                 <tr>
-                    <td rowspan="2">@count</td>
-                    <td rowspan="2" class="fw-bold">@emp.Codigo</td>
-                    <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
-                    <td>@(emp.Semanas[0].Lunes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Martes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Miercoles?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Jueves?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[0].Viernes?.ToString("dd-MMM") ?? "")</td>
-                    <td class="text-start small italic">@emp.Semanas[0].Motivo</td>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        <i class="bi bi-info-circle"></i> No se encontraron mecánicos con permisos o ausencias en este periodo.
+                    </td>
                 </tr>
-                <tr>
-                    <td>@(emp.Semanas[1].Lunes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Martes?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Miercoles?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Jueves?.ToString("dd-MMM") ?? "")</td>
-                    <td>@(emp.Semanas[1].Viernes?.ToString("dd-MMM") ?? "")</td>
-                    <td class="text-start small italic">@emp.Semanas[1].Motivo</td>
-                </tr>
-                count++;
+            }
+            else
+            {
+                @foreach (var emp in empleadosConAusencias)
+                {
+                    <tr>
+                        <td rowspan="2">@count</td>
+                        <td rowspan="2" class="fw-bold">@emp.Codigo</td>
+                        <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
+
+                        @* Semana 1: Si la fecha tiene valor, mostramos el estado (motivo) *@
+                        <td>@(emp.Semanas[0].Lunes.HasValue ? emp.Semanas[0].Lunes.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[0].Martes.HasValue ? emp.Semanas[0].Martes.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[0].Miercoles.HasValue ? emp.Semanas[0].Miercoles.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[0].Jueves.HasValue ? emp.Semanas[0].Jueves.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[0].Viernes.HasValue ? emp.Semanas[0].Viernes.Value.ToString("dd-MMM") : "")</td>
+                        <td class="text-start small italic">@emp.Semanas[0].Motivo</td>
+                    </tr>
+                    <tr>
+                        @* Semana 2 *@
+                        <td>@(emp.Semanas[1].Lunes.HasValue ? emp.Semanas[1].Lunes.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[1].Martes.HasValue ? emp.Semanas[1].Martes.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[1].Miercoles.HasValue ? emp.Semanas[1].Miercoles.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[1].Jueves.HasValue ? emp.Semanas[1].Jueves.Value.ToString("dd-MMM") : "")</td>
+                        <td>@(emp.Semanas[1].Viernes.HasValue ? emp.Semanas[1].Viernes.Value.ToString("dd-MMM") : "")</td>
+                        <td class="text-start small italic">@emp.Semanas[1].Motivo</td>
+                    </tr>
+                    count++;
+                }
             }
         </tbody>
     </table>
@@ -229,5 +159,43 @@
         </div>
     </div>
 
+    <script>
+        const input = document.getElementById('periodSearchInput');
+        const container = document.getElementById('periodSearchResults');
+        const allItems = document.querySelectorAll('.search-item');
+
+        input.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            if (searchText.length === 0) {
+                container.style.display = 'none';
+                allItems.forEach(item => item.style.display = 'none');
+                return;
+            }
+            let foundCount = 0;
+            allItems.forEach(item => {
+                const itemData = item.getAttribute('data-filter');
+                if (itemData.includes(searchText)) {
+                    item.style.display = 'block';
+                    foundCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            container.style.display = foundCount > 0 ? 'block' : 'none';
+        });
+
+        allItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                window.location.href = '/Ausentismo/ReporteMecanicos?periodId=' + id;
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !container.contains(e.target)) {
+                container.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

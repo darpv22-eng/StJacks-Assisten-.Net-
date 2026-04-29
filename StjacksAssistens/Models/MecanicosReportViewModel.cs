@@ -1,5 +1,6 @@
 ﻿namespace StjacksAssistens.Models
 {
+    //Reporte para planilla de mecanicos, se muestra el periodo seleccionado y una tabla con los mecanicos y sus ausencias por semana
     public class MecanicosReportViewModel
     {
         
@@ -11,12 +12,11 @@
     {
         public int Codigo { get; set; }
         public string Nombre { get; set; }
-        public List<SemanaDatos> Semanas { get; set; } // Semana 1 (fila arriba) y Semana 2 (fila abajo)
+        public List<SemanaDatos> Semanas { get; set; }
     }
 
     public class SemanaDatos
     {
-        // Guardamos la fecha solo si tiene "PP" para mostrarla en el cuadro
         public DateTime? Lunes { get; set; }
         public DateTime? Martes { get; set; }
         public DateTime? Miercoles { get; set; }

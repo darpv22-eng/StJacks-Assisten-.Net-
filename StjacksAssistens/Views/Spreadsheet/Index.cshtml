@@ -1,7 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Gestión de Planillas Pro";
 }
-
+@* Index para mostrar donde esta todas las planillas *@
 <style>
     .glass-header {
         background: rgba(255, 255, 255, 0.7);
@@ -89,7 +89,7 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        @* <div class="col-md-4">
             <div class="card card-planilla shadow-sm p-4">
                 <div class="text-end">
                     <span class="status-badge"><i class="bi bi-circle-fill text-secondary me-1"></i> Operativo</span>
@@ -108,7 +108,34 @@
                     </div>
                 </div>
             </div>
+        </div> *@
+        <div class="col-md-4">
+            <div class="card card-planilla shadow-sm p-4">
+                <div class="text-end">
+                    <span class="status-badge"><i class="bi bi-circle-fill text-secondary me-1"></i> Operativo</span>
+                </div>
+                <div class="card-body text-center">
+                    <div class="icon-box bg-secondary bg-opacity-10 text-secondary">
+                        <i class="bi bi-magic"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Confección</h4>
+                    <p class="text-muted small mb-4">Cálculo de planilla para operarios de costura y ensamble de prendas de alta calidad.</p>
+                    <hr class="opacity-25">
+                    <div class="d-grid mt-4">
+                        <a asp-controller="Operators"
+                           asp-action="ReporteOperarios"
+                           asp-route-periodId="@ViewBag.CurrentPeriodId"
+                           class="btn btn-secondary btn-action text-white"
+                           style="background-color: #7209b7; border-color: #7209b7;">
+                            Gestionar Planilla <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
+
+
+
 
         <div class="col-md-4">
             <div class="card card-planilla shadow-sm p-4">

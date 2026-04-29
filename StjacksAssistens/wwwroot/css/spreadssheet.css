@@ -1,57 +1,74 @@
-﻿body {
-    font-family: 'Segoe UI', Calibri, Arial;
-    color: #000;
-    background-color: #fff;
+﻿/*Mecanicos*/
+.search-results-container {
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    display: none; /* Oculto por defecto */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* Tabla estilo Excel */
+.search-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
+    display: none; /* Las filas no existen hasta que coincidan */
+}
+
+    .search-item:hover {
+        background-color: #f1f1f1;
+        color: #000;
+    }
+
+    .search-item strong {
+        color: #5b2c6f;
+    }
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+
+
+/*Operarios*/
 .table-excel {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    margin-bottom: 10px;
 }
 
     .table-excel th, .table-excel td {
         border: 1px solid #000;
-        padding: 4px 8px;
+        padding: 4px;
         text-align: center;
-        font-size: 11px;
     }
 
 .header-purple {
-    background-color: #e8daef !important;
+    background-color: #E2D9F3 !important;
     font-weight: bold;
 }
 
-/* Firmas */
-.signature-section {
-    margin-top: 50px;
+.no-print {
+    @media print {
+        display: none;
+    }
 }
 
 .signature-line {
     border-top: 1px solid #000;
     margin-top: 40px;
-    display: inline-block;
     width: 80%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* Control de Impresión */
-@media print {
-    .no-print {
-        display: none !important;
-    }
-
-    body {
-        padding: 0 !important;
-    }
-
-    .container-fluid {
-        width: 100% !important;
-    }
-}
-
-.filter-panel {
-    background: #fdfefe;
-    border: 1px solid #eaf2f8;
-    border-left: 4px solid #8e44ad;
+.text-start {
+    text-align: left !important;
 }

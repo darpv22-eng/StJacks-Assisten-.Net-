@@ -1,0 +1,180 @@
+﻿@model OperariosReportViewModel
+@{
+    Layout = null;
+    var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
+
+    // Filtramos para que solo aparezcan operarios que tienen al menos una ausencia marcada
+    var empleadosConDatos = Model.Empleados.Where(emp =>
+        emp.Semanas.Any(s =>
+            s.Lunes.HasValue ||
+            s.Martes.HasValue ||
+            s.Miercoles.HasValue ||
+            s.Jueves.HasValue ||
+            s.Viernes.HasValue
+        )
+    ).ToList();
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Operarios - @Model.AreaNombre</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/spreadssheet.css" />
+
+</head>
+<body class="p-4 bg-white">
+
+    @* Panel de búsqueda *@
+    <div class="no-print p-3 mb-4 shadow-sm rounded border">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <label class="fw-bold small text-muted">Buscar Periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Ej: 2026...">
+                <div id="periodSearchResults" class="list-group position-absolute shadow" style="z-index:1000; display:none;">
+                    @foreach (var p in listaPeriodos)
+                    {
+                        <button class="list-group-item list-group-item-action small" onclick="window.location.href='?periodId=@p.Id'">
+                            @p.Description (@p.StartDate.ToShortDateString())
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="col text-end">
+                <button onclick="window.print()" class="btn btn-dark btn-sm"><i class="bi bi-printer"></i> Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    @* Encabezado Industrias St. Jack's *@
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold" style="font-size: 12px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 14px;">REPORTE DE AUSENTISMO</span>
+    </div>
+
+    @* Info del Área (Basado en tu imagen de Excel) *@
+    <table class="table-excel">
+        <tr class="header-purple">
+            <td style="width: 8%;">CDC</td>
+            <td style="width: 40%;">Nombre del Área, Depto. o Gerencia</td>
+            <td style="width: 15%;">Tipo de Planilla</td>
+            <td style="width: 37%;">Período de Pago</td>
+        </tr>
+        <tr>
+            <td>@Model.CDC</td>
+            <td>@Model.AreaNombre</td>
+            <td>@Model.TipoPlanilla</td>
+            <td class="fw-bold">Del @Model.Periodo.StartDate.ToString("dd 'de' MMMM") al @Model.Periodo.EndDate.ToString("dd 'de' MMMM 'de' yyyy")</td>
+        </tr>
+    </table>
+
+    @* Cuerpo del Reporte *@
+    <table class="table-excel">
+        <thead>
+            <tr class="header-purple">
+                <th style="width: 3%;">No.</th>
+                <th style="width: 7%;">Código</th>
+                <th style="width: 25%;">Nombre del Empleado</th>
+                <th style="width: 8%;">Lunes</th>
+                <th style="width: 8%;">Martes</th>
+                <th style="width: 8%;">Miércoles</th>
+                <th style="width: 8%;">Jueves</th>
+                <th style="width: 8%;">Viernes</th>
+                <th>Motivo de la Ausencia / Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int count = 1;
+            }
+            @foreach (var emp in empleadosConDatos)
+            {
+                foreach (var sem in emp.Semanas)
+                {
+                    <tr>
+                        @* Solo mostramos el número, código y nombre en la primera fila de las dos que tiene cada empleado *@
+                        <td>@(sem == emp.Semanas.First() ? count.ToString() : "")</td>
+                        <td class="fw-bold">@(sem == emp.Semanas.First() ? emp.Codigo : "")</td>
+                        <td class="text-start ps-2">@(sem == emp.Semanas.First() ? emp.Nombre : "")</td>
+
+                        <td>@(sem.Lunes?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem.Martes?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem.Jueves?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem.Viernes?.ToString("dd-MMM") ?? "")</td>
+
+                        <td class="text-start small">@sem.Motivo</td>
+                    </tr>
+                }
+                count++;
+            }
+            @if (!empleadosConDatos.Any())
+            {
+                <tr>
+                    <td colspan="9" class="p-4 text-muted">No se encontraron ausencias registradas en este periodo.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @* Fecha de Elaboración *@
+    <div class="mt-3">
+        <table style="width: 40%; border: 1px solid black; font-size: 11px;">
+            <tr>
+                <td class="header-purple" style="width: 40%; border: 1px solid black; padding: 5px;">Fecha de elaboración:</td>
+                <td style="padding: 5px;">@DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy")</td>
+            </tr>
+        </table>
+    </div>
+
+    @* Firmas actualizadas (Nombres de Operarios/Confección) *@
+    <div class="container-fluid mt-5 text-center" style="font-size: 11px;">
+        <div class="row">
+            <div class="col-4">
+                <div class="signature-line"></div>
+                <div class="fw-bold">Elaborado por:</div>
+                <div>Edenilson Bonilla</div>
+                <div class="text-muted">Digitador</div>
+            </div>
+            <div class="col-4">
+                <div class="signature-line"></div>
+                <div class="fw-bold">Revisado por:</div>
+                <div>Ing. Luis Alonso Barahona</div>
+                <div class="text-muted">Jefe de Confección y Empaque</div>
+            </div>
+            <div class="col-4">
+                <div class="signature-line"></div>
+                <div class="fw-bold">Autorizado por:</div>
+                <div>Ing. Johanna Quiñónez</div>
+                <div class="text-muted">Directora de Producción</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script simple para la búsqueda de periodos
+        document.getElementById('periodSearchInput').addEventListener('input', function(e) {
+            const search = e.target.value.toLowerCase();
+            const results = document.getElementById('periodSearchResults');
+            const items = results.getElementsByTagName('button');
+            let hasResults = false;
+
+            if (search.length > 0) {
+                results.style.display = 'block';
+                for (let item of items) {
+                    if (item.textContent.toLowerCase().includes(search)) {
+                        item.style.display = 'block';
+                        hasResults = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            } else {
+                results.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
