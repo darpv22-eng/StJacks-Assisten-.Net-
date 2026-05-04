@@ -72,3 +72,41 @@
 .text-start {
     text-align: left !important;
 }
+
+
+
+/* Estilos para la edición */
+.editable-motivo {
+    min-height: 25px;
+    cursor: text;
+    padding: 2px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+    .editable-motivo:hover {
+        background-color: #f0f0f0;
+        border: 1px dashed #6f42c1;
+    }
+
+    .editable-motivo:focus {
+        outline: none;
+        background-color: #fff;
+        border: 1px solid #6f42c1;
+        box-shadow: 0 0 5px rgba(111, 66, 193, 0.3);
+    }
+
+.saving {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .editable-motivo {
+        border: none !important;
+    }
+}

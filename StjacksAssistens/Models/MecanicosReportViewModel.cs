@@ -24,5 +24,11 @@
         public DateTime? Viernes { get; set; }
         public string Motivo { get; set; }
     }
+    public class ObservationRequest
+    {
+        public string OperatorCode { get; set; } // Usamos Code porque es lo que pusimos en data-opid
+        public int PeriodId { get; set; }
+        public string Observation { get; set; }
+    }
 }
 

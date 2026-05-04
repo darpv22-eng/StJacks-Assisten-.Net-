@@ -3,7 +3,6 @@
     Layout = null;
     var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
 }
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,10 +11,53 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
-</head>
-<body class="p-4">
+    <style>
+        /* Estilos para el buscador dinámico */
+        .search-results-container {
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 5px 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-    <div class="no-print filter-panel p-3 mb-4 shadow-sm rounded">
+        .search-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background 0.2s;
+        }
+
+            .search-item:hover {
+                background-color: #f1f3f5;
+            }
+
+        .editable-motivo {
+            min-height: 25px;
+            outline: none;
+            padding: 2px;
+        }
+
+            .editable-motivo.saving {
+                background-color: #fff3cd;
+                opacity: 0.7;
+            }
+
+        @@media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 bg-white">
+
+    @* Panel de Filtros y Búsqueda *@
+    <div class="no-print p-3 mb-4 shadow-sm rounded border bg-light">
         <div class="row align-items-center">
             <div class="col-md-5 position-relative">
                 <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Digite fecha o nombre del periodo:</label>
@@ -26,7 +68,6 @@
                     @foreach (var p in listaPeriodos)
                     {
                         <div class="search-item"
-                             style="display: none;"
                              data-id="@p.Id"
                              data-filter="@p.Description.ToLower() @p.StartDate.ToString("dd/MM/yyyy") @p.EndDate.ToString("dd/MM/yyyy")">
                             <strong>@p.Description</strong><br>
@@ -46,12 +87,13 @@
         </div>
     </div>
 
+    @* Encabezado del Reporte *@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
         <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO</span>
     </div>
 
-    <table class="table-excel">
+    <table class="table-excel mb-3">
         <tr class="header-purple">
             <td style="width: 10%;">CDC</td>
             <td style="width: 40%;">Nombre del Área, Depto. o Gerencia</td>
@@ -66,6 +108,7 @@
         </tr>
     </table>
 
+    @* Tabla Principal *@
     <table class="table-excel">
         <thead>
             <tr class="header-purple">
@@ -76,34 +119,27 @@
                 <th rowspan="2">Motivo de la Ausencia / Observaciones</th>
             </tr>
             <tr class="header-purple">
-                <th style="width: 65px;">Lunes</th>
-                <th style="width: 65px;">Martes</th>
-                <th style="width: 65px;">Miércoles</th>
-                <th style="width: 65px;">Jueves</th>
-                <th style="width: 65px;">Viernes</th>
+                <th style="width: 80px;">Lunes</th>
+                <th style="width: 80px;">Martes</th>
+                <th style="width: 80px;">Miércoles</th>
+                <th style="width: 80px;">Jueves</th>
+                <th style="width: 80px;">Viernes</th>
             </tr>
         </thead>
         <tbody>
             @{
                 int count = 1;
-                // Filtramos: Solo mecánicos que tengan alguna fecha registrada (ausencia)
-                // en cualquiera de las dos semanas.
                 var empleadosConAusencias = Model.Empleados.Where(emp =>
                 emp.Semanas.Any(s =>
-                s.Lunes.HasValue ||
-                s.Martes.HasValue ||
-                s.Miercoles.HasValue ||
-                s.Jueves.HasValue ||
-                s.Viernes.HasValue
-                )
-                ).ToList();
+                s.Lunes.HasValue || s.Martes.HasValue || s.Miercoles.HasValue || s.Jueves.HasValue || s.Viernes.HasValue
+                )).ToList();
             }
 
             @if (!empleadosConAusencias.Any())
             {
                 <tr>
                     <td colspan="9" class="text-center py-4 text-muted">
-                        <i class="bi bi-info-circle"></i> No se encontraron mecánicos con permisos o ausencias en este periodo.
+                        <i class="bi bi-info-circle"></i> No se encontraron registros de ausencias en este periodo.
                     </td>
                 </tr>
             }
@@ -111,27 +147,45 @@
             {
                 @foreach (var emp in empleadosConAusencias)
                 {
+                    var sem1 = emp.Semanas.ElementAtOrDefault(0);
+                    var sem2 = emp.Semanas.ElementAtOrDefault(1);
+
+                    <!-- Primera Fila (Semana 1) -->
                     <tr>
                         <td rowspan="2">@count</td>
                         <td rowspan="2" class="fw-bold">@emp.Codigo</td>
                         <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
 
-                        @* Semana 1: Si la fecha tiene valor, mostramos el estado (motivo) *@
-                        <td>@(emp.Semanas[0].Lunes.HasValue ? emp.Semanas[0].Lunes.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[0].Martes.HasValue ? emp.Semanas[0].Martes.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[0].Miercoles.HasValue ? emp.Semanas[0].Miercoles.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[0].Jueves.HasValue ? emp.Semanas[0].Jueves.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[0].Viernes.HasValue ? emp.Semanas[0].Viernes.Value.ToString("dd-MMM") : "")</td>
-                        <td class="text-start small italic">@emp.Semanas[0].Motivo</td>
+                        <td>@(sem1?.Lunes?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem1?.Martes?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem1?.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem1?.Jueves?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem1?.Viernes?.ToString("dd-MMM") ?? "")</td>
+
+                        <td class="text-start small italic p-1">
+                            <div class="editable-motivo" contenteditable="true"
+                                 data-opid="@emp.Codigo" data-period="@Model.Periodo.Id"
+                                 onblur="saveObservation(this)">
+                                @(sem1?.Motivo ?? "")
+                            </div>
+                        </td>
                     </tr>
+
+                    <!-- Segunda Fila (Semana 2) -->
                     <tr>
-                        @* Semana 2 *@
-                        <td>@(emp.Semanas[1].Lunes.HasValue ? emp.Semanas[1].Lunes.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[1].Martes.HasValue ? emp.Semanas[1].Martes.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[1].Miercoles.HasValue ? emp.Semanas[1].Miercoles.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[1].Jueves.HasValue ? emp.Semanas[1].Jueves.Value.ToString("dd-MMM") : "")</td>
-                        <td>@(emp.Semanas[1].Viernes.HasValue ? emp.Semanas[1].Viernes.Value.ToString("dd-MMM") : "")</td>
-                        <td class="text-start small italic">@emp.Semanas[1].Motivo</td>
+                        <td>@(sem2?.Lunes?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem2?.Martes?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem2?.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem2?.Jueves?.ToString("dd-MMM") ?? "")</td>
+                        <td>@(sem2?.Viernes?.ToString("dd-MMM") ?? "")</td>
+
+                        <td class="text-start small italic p-1">
+                            <div class="editable-motivo" contenteditable="true"
+                                 data-opid="@emp.Codigo" data-period="@Model.Periodo.Id"
+                                 onblur="saveObservation(this)">
+                                @(sem2?.Motivo ?? "")
+                            </div>
+                        </td>
                     </tr>
                     count++;
                 }
@@ -139,20 +193,21 @@
         </tbody>
     </table>
 
-    <div class="container-fluid signature-section text-center">
+    @* Sección de Firmas *@
+    <div class="container-fluid text-center mt-5">
         <div class="row">
             <div class="col-4">
-                <div class="signature-line"></div>
+                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
                 <div class="fw-bold small">Elaborado por:</div>
                 <div class="small">Digitador de Planilla</div>
             </div>
             <div class="col-4">
-                <div class="signature-line"></div>
+                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
                 <div class="fw-bold small">Revisado por:</div>
                 <div class="small">Jefe de Mantenimiento</div>
             </div>
             <div class="col-4">
-                <div class="signature-line"></div>
+                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
                 <div class="fw-bold small">Autorizado por:</div>
                 <div class="small">Recursos Humanos</div>
             </div>
@@ -160,17 +215,19 @@
     </div>
 
     <script>
+        // --- LÓGICA DE BÚSQUEDA ---
         const input = document.getElementById('periodSearchInput');
         const container = document.getElementById('periodSearchResults');
         const allItems = document.querySelectorAll('.search-item');
 
         input.addEventListener('input', function() {
             const searchText = this.value.toLowerCase().trim();
+
             if (searchText.length === 0) {
                 container.style.display = 'none';
-                allItems.forEach(item => item.style.display = 'none');
                 return;
             }
+
             let foundCount = 0;
             allItems.forEach(item => {
                 const itemData = item.getAttribute('data-filter');
@@ -181,9 +238,11 @@
                     item.style.display = 'none';
                 }
             });
+
             container.style.display = foundCount > 0 ? 'block' : 'none';
         });
 
+        // Click en un resultado
         allItems.forEach(item => {
             item.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
@@ -191,11 +250,41 @@
             });
         });
 
+        // Cerrar al hacer click fuera
         document.addEventListener('click', function(e) {
             if (!input.contains(e.target) && !container.contains(e.target)) {
                 container.style.display = 'none';
             }
         });
+
+        // --- GUARDADO DE OBSERVACIONES ---
+        function saveObservation(element) {
+            const text = element.innerText.trim();
+            const opCode = element.getAttribute('data-opid');
+            const pId = element.getAttribute('data-period');
+
+            element.classList.add('saving');
+
+            fetch('/Ausentismo/GuardarObservacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    OperatorCode: opCode,
+                    PeriodId: parseInt(pId),
+                    Observation: text
+                })
+            })
+            .then(response => {
+                element.classList.remove('saving');
+                if(!response.ok) {
+                    alert("Error al guardar los cambios.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                element.classList.remove('saving');
+            });
+        }
     </script>
 </body>
 </html>

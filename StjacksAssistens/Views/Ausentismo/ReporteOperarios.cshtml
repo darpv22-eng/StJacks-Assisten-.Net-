@@ -1,0 +1,226 @@
+﻿@model OperariosReportViewModel
+@{
+    Layout = null;
+    var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
+    var empleadosConDatos = Model.Empleados;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Operarios - @Model.AreaNombre</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/spreadssheet.css" />
+    <style>
+        .observation-input {
+            font-size: 11px;
+            line-height: 1.2;
+            min-height: 30px;
+            transition: background-color 0.3s;
+            overflow: hidden;
+            width: 100%;
+            border: none;
+            background: transparent;
+        }
+
+            .observation-input:focus {
+                background-color: #fff !important;
+                box-shadow: inset 0 0 0 1px #6f42c1;
+                outline: none;
+            }
+
+        .saving-row {
+            background-color: #fff3cd !important;
+        }
+
+        .error-row {
+            background-color: #f8d7da !important;
+        }
+
+        @@media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .observation-input {
+                resize: none;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 bg-white">
+
+    @* Panel de búsqueda *@
+    <div class="no-print p-3 mb-4 shadow-sm rounded border bg-light">
+        <div class="row align-items-center">
+            <div class="col-md-5 position-relative">
+                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Buscar Periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Ej: 2026...">
+                <div id="periodSearchResults" class="list-group position-absolute shadow w-100" style="z-index:1000; display:none;">
+                    @foreach (var p in listaPeriodos)
+                    {
+                        <button class="list-group-item list-group-item-action small" onclick="window.location.href='?periodId=@p.Id'">
+                            @p.Description (@p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString())
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="col text-end">
+                <button onclick="window.print()" class="btn btn-dark btn-sm"><i class="bi bi-printer"></i> Imprimir</button>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Regresar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold" style="font-size: 12px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 14px;">REPORTE DE AUSENTISMO (CONFECCIÓN)</span>
+    </div>
+
+    <table class="table-excel mb-3">
+        <tr class="header-purple">
+            <td style="width: 8%;">CDC</td>
+            <td style="width: 40%;">Nombre del Área, Depto. o Gerencia</td>
+            <td style="width: 15%;">Tipo de Planilla</td>
+            <td style="width: 37%;">Período de Pago</td>
+        </tr>
+        <tr>
+            <td>@Model.CDC</td>
+            <td>@Model.AreaNombre</td>
+            <td>@Model.TipoPlanilla</td>
+            <td class="fw-bold">Del @Model.Periodo.StartDate.ToString("dd/MM/yyyy") al @Model.Periodo.EndDate.ToString("dd/MM/yyyy")</td>
+        </tr>
+    </table>
+
+    <table class="table-excel">
+        <thead>
+            <tr class="header-purple">
+                <th rowspan="2" style="width: 3%;">No.</th>
+                <th rowspan="2" style="width: 7%;">Código</th>
+                <th rowspan="2" style="width: 25%;">Nombre del Empleado</th>
+                <th colspan="5">Días de la Semana</th>
+                <th rowspan="2">Observaciones / Motivos</th>
+            </tr>
+            <tr class="header-purple">
+                <th style="width: 8%;">Lunes</th>
+                <th style="width: 8%;">Martes</th>
+                <th style="width: 8%;">Miércoles</th>
+                <th style="width: 8%;">Jueves</th>
+                <th style="width: 8%;">Viernes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int count = 1;
+            }
+            @foreach (var emp in empleadosConDatos)
+            {
+                var sem1 = emp.Semanas.ElementAtOrDefault(0);
+                var sem2 = emp.Semanas.ElementAtOrDefault(1);
+
+                <!-- Primera Fila (Semana 1) -->
+                <tr>
+                    <td rowspan="2">@count</td>
+                    <td rowspan="2" class="fw-bold">@emp.Codigo</td>
+                    <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
+
+                    <td>@(sem1?.Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Viernes?.ToString("dd-MMM") ?? "")</td>
+
+                    <td class="text-start p-0">
+                        <textarea class="observation-input"
+                              data-opid="@emp.Codigo" data-period="@Model.Periodo.Id"
+                              rows="1">@(sem1?.Motivo ?? "")</textarea>
+                    </td>
+                </tr>
+
+                <!-- Segunda Fila (Semana 2) -->
+                <tr>
+                    <td>@(sem2?.Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Viernes?.ToString("dd-MMM") ?? "")</td>
+
+                    <td class="text-start p-0">
+                        <textarea class="observation-input"
+                              data-opid="@emp.Codigo" data-period="@Model.Periodo.Id"
+                              rows="1">@(sem2?.Motivo ?? "")</textarea>
+                    </td>
+                </tr>
+                count++;
+            }
+        </tbody>
+    </table>
+
+    @* Firmas *@
+    <div class="row mt-5 text-center" style="font-size: 11px;">
+        <div class="col-4">
+            <div style="border-top: 1px solid black; width: 80%; margin: auto;"></div>
+            <div class="fw-bold">Elaborado: Edenilson Bonilla</div>
+        </div>
+        <div class="col-4">
+            <div style="border-top: 1px solid black; width: 80%; margin: auto;"></div>
+            <div class="fw-bold">Revisado: Luis Alonso Barahona</div>
+        </div>
+        <div class="col-4">
+            <div style="border-top: 1px solid black; width: 80%; margin: auto;"></div>
+            <div class="fw-bold">Autorizado: Johanna Quiñónez</div>
+        </div>
+    </div>
+
+    <script>
+        // Lógica de guardado y búsqueda (Misma que ya tenías)
+        document.querySelectorAll('.observation-input').forEach(textarea => {
+            textarea.addEventListener('blur', function() {
+                const opCode = this.getAttribute('data-opid');
+                const periodId = this.getAttribute('data-period');
+                const text = this.value;
+                this.classList.add('saving-row');
+
+                fetch('/Ausentismo/GuardarObservacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        OperatorCode: opCode,
+                        PeriodId: parseInt(periodId),
+                        Observation: text
+                    })
+                })
+                .then(response => {
+                    this.classList.remove('saving-row');
+                    if (!response.ok) this.classList.add('error-row');
+                })
+                .catch(() => {
+                    this.classList.remove('saving-row');
+                    this.classList.add('error-row');
+                });
+            });
+        });
+
+        // Buscador de periodos
+        const searchInput = document.getElementById('periodSearchInput');
+        const resultsDiv = document.getElementById('periodSearchResults');
+
+        searchInput.addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            const items = resultsDiv.getElementsByTagName('button');
+            if(val.length > 0) {
+                resultsDiv.style.display = 'block';
+                for(let i=0; i<items.length; i++) {
+                    items[i].style.display = items[i].textContent.toLowerCase().includes(val) ? 'block' : 'none';
+                }
+            } else {
+                resultsDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

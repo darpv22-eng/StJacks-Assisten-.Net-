@@ -74,58 +74,7 @@ namespace StjacksAssistens.Controllers
             return View(model);
         }
 
-        // --- NUEVA ACCIÓN PARA EL REPORTE ESTILO EXCEL ---
-        //public async Task<IActionResult> ReporteOperarios(int periodId)
-        //{
-        //    var periodo = await _context.Periodss.FindAsync(periodId);
-        //    if (periodo == null) return NotFound();
-
-        //    var todosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
-
-        //    // Obtenemos todos los operarios y su asistencia para este periodo
-        //    var operators = await _context.Operators.ToListAsync();
-        //    var asistencias = await _context.Attendence
-        //        .Where(a => a.PeriodId == periodId && a.Status != "X") // Solo los que no son "X" (asistencia normal)
-        //        .ToListAsync();
-
-        //    var listaEmpleados = new List<EmpleadoAusencia>();
-
-        //    foreach (var op in operators)
-        //    {
-        //        var asistenciasOp = asistencias.Where(a => a.OperatorsId == op.Id).ToList();
-
-        //        if (asistenciasOp.Any())
-        //        {
-        //            // Dividimos en Semana 1 y Semana 2 (Catorcenal)
-        //            DateTime midPoint = periodo.StartDate.AddDays(7);
-
-        //            var semanas = new List<SemanaDetalle>
-        //            {
-        //                GenerarDetalleSemana(asistenciasOp.Where(a => a.AttendanceDate < midPoint)),
-        //                GenerarDetalleSemana(asistenciasOp.Where(a => a.AttendanceDate >= midPoint))
-        //            };
-
-        //            listaEmpleados.Add(new EmpleadoAusencia
-        //            {
-        //                Codigo = op.Code.ToString(),
-        //                Nombre = op.Name,
-        //                Semanas = semanas
-        //            });
-        //        }
-        //    }
-
-        //    var viewModel = new OperariosReportViewModel
-        //    {
-        //        Periodo = periodo,
-        //        Empleados = listaEmpleados,
-        //        AreaNombre = "Confeccion P2",
-        //        CDC = "407",
-        //        TipoPlanilla = "06 Obra"
-        //    };
-
-        //    ViewBag.TodosLosPeriodos = todosLosPeriodos;
-        //    return View(viewModel);
-        //}
+       
         public async Task<IActionResult> ReporteOperarios(int? periodId) // 1. Cambiamos a int?
         {
             // 2. Insertamos la validación aquí al principio
