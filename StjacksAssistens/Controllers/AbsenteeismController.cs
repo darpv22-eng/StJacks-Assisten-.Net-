@@ -147,5 +147,61 @@ namespace StjacksAssistens.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+
+        #region REPORTE EMPAQUE
+        public async Task<IActionResult> ReporteEmpaque(int? periodId)
+        {
+            if (periodId == null || periodId == 0)
+            {
+                var ultimo = await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
+                if (ultimo == null) return NotFound();
+                return RedirectToAction(nameof(ReporteEmpaque), new { periodId = ultimo.Id });
+            }
+
+            var periodo = await _context.Periodss.FindAsync(periodId);
+            ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
+
+            // Filtramos solo los de la categoría Empaque
+            var operators = await _context.Operators
+                .Include(o => o.Category)
+                .Where(o => o.Category.Name.Contains("Empaque"))
+                .ToListAsync();
+
+            var asistencias = await _context.Attendence
+                .Where(a => a.PeriodId == periodId && a.Status != "X")
+                .ToListAsync();
+
+            var listaEmpleados = new List<EmpleadoAusencia>();
+
+            foreach (var op in operators)
+            {
+                var asisOp = asistencias.Where(a => a.OperatorsId == op.Id).ToList();
+                if (asisOp.Any())
+                {
+                    DateTime midPoint = periodo.StartDate.AddDays(7);
+                    listaEmpleados.Add(new EmpleadoAusencia
+                    {
+                        Codigo = op.Code.ToString(),
+                        Nombre = op.Name,
+                        Semanas = new List<SemanaDetalle>
+                {
+                    GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint)),
+                    GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint))
+                }
+                    });
+                }
+            }
+
+            return View(new OperariosReportViewModel
+            {
+                Periodo = periodo,
+                Empleados = listaEmpleados,
+                AreaNombre = "EMPAQUE / PRODUCTO TERMINADO",
+                CDC = "410", // Código de centro de costos para Empaque
+                TipoPlanilla = "06 Obra"
+            });
+        }
+        #endregion
     }
 }
