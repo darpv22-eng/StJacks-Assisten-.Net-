@@ -13,6 +13,16 @@
         public int Codigo { get; set; }
         public string Nombre { get; set; }
         public List<SemanaDatos> Semanas { get; set; }
+        public int HorasAusente { get; set; }
+        public int MinutosAusente { get; set; }
+    }
+
+    public class TimeRequest
+    {
+        public string? OperatorCode { get; set; } // El '?' evita la advertencia CS8618
+        public int PeriodId { get; set; }
+        public int Hours { get; set; }
+        public int Minutes { get; set; }
     }
 
     public class SemanaDatos

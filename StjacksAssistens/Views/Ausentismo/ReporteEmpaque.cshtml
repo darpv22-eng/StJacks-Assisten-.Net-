@@ -13,12 +13,11 @@
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
 </head>
 <body class="p-4 bg-white">
-
     <div class="no-print p-3 mb-4 shadow-sm rounded border bg-light">
         <div class="row align-items-center">
             <div class="col-md-5 position-relative">
-                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Buscar otro periodo de Empaque:</label>
-                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Buscar por fecha o nombre..." autocomplete="off">
+                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Buscar otro periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Buscar..." autocomplete="off">
                 <div id="periodSearchResults" class="search-results-container" style="display: none;">
                     @foreach (var p in listaPeriodos)
                     {
@@ -30,17 +29,22 @@
                 </div>
             </div>
             <div class="col-md-7 text-end">
-                <button onclick="window.print()" class="btn btn-dark btn-sm"><i class="bi bi-printer"></i> Imprimir</button>
-                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Regresar</a>
+                <button type="button" id="btnToggleModo" class="btn btn-primary btn-sm" onclick="toggleVista()">
+                    <i class="bi bi-clock-history"></i> <span id="btnText">Por Hora</span>
+                </button>
+                <button onclick="window.print()" class="btn btn-dark btn-sm">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Regresar
+                </a>
             </div>
         </div>
     </div>
-
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
-        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO - EMPAQUE</span>
+        <span id="txtTitulo" class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO - EMPAQUE</span>
     </div>
-
     <table class="table-excel mb-3">
         <tr class="header-purple">
             <td style="width: 10%;">CDC</td>
@@ -55,7 +59,6 @@
             <td class="fw-bold">Del @Model.Periodo.StartDate.ToString("dd/MM/yyyy") al @Model.Periodo.EndDate.ToString("dd/MM/yyyy")</td>
         </tr>
     </table>
-
     <table class="table-excel">
         <thead>
             <tr class="header-purple">
@@ -63,6 +66,8 @@
                 <th rowspan="2" style="width: 60px;">Código</th>
                 <th rowspan="2">Nombre del Empleado</th>
                 <th colspan="5">Días de la Semana</th>
+                <th rowspan="2" class="modo-hora-col col-tiempo-input" style="width: 110px;">Tiempo (H:M)</th>
+                <th rowspan="2" class="modo-hora-col" style="width: 90px;">Descuento</th>
                 <th rowspan="2">Motivo / Observaciones</th>
             </tr>
             <tr class="header-purple">
@@ -81,7 +86,6 @@
             {
                 var sem1 = emp.Semanas.ElementAtOrDefault(0);
                 var sem2 = emp.Semanas.ElementAtOrDefault(1);
-
                 <tr>
                     <td rowspan="2">@count</td>
                     <td rowspan="2" class="fw-bold">@emp.Codigo</td>
@@ -91,6 +95,16 @@
                     <td>@(sem1?.Miercoles?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem1?.Jueves?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem1?.Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td rowspan="2" class="modo-hora-col col-tiempo-input">
+                        <div class="time-input-group">
+                            <input type="number" class="input-time in-h" placeholder="0" oninput="calcular(this)">
+                            <b>:</b>
+                            <input type="number" class="input-time in-m" placeholder="0" oninput="calcular(this)">
+                        </div>
+                    </td>
+                    <td rowspan="2" class="modo-hora-col">
+                        <span class="label-descuento">$ 0.00</span>
+                    </td>
                     <td class="text-start small italic p-1">
                         <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
                             @(sem1?.Motivo ?? "")
@@ -114,8 +128,7 @@
         </tbody>
     </table>
 
-    @* Firmas Personalizadas para Empaque *@
-    <div class="container-fluid text-center mt-5">
+    <div class="container-fluid text-center mt-5 signature-section">
         <div class="row">
             <div class="col-4">
                 <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
@@ -124,7 +137,7 @@
             </div>
             <div class="col-4">
                 <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
-                <div class="fw-bold small">Revisado por:Luis Barahona</div>
+                <div class="fw-bold small">Revisado por: Luis Barahona</div>
                 <div class="small">Jefe de Empaque</div>
             </div>
             <div class="col-4">
@@ -134,9 +147,32 @@
             </div>
         </div>
     </div>
-
     <script>
-        // Lógica de búsqueda
+        function toggleVista() {
+            const horasCol = document.querySelectorAll('.modo-hora-col');
+            const btnText = document.getElementById('btnText');
+            const titulo = document.getElementById('txtTitulo');
+
+            if (horasCol[0].style.display === 'none' || horasCol[0].style.display === '') {
+                horasCol.forEach(el => el.style.display = 'table-cell');
+                btnText.innerText = "Quitar Modo Hora";
+                titulo.innerText = "REPORTE DE DESCUENTOS POR HORA - EMPAQUE";
+            } else {
+                horasCol.forEach(el => el.style.display = 'none');
+                btnText.innerText = "Por Hora";
+                titulo.innerText = "REPORTE DE AUSENTISMO - EMPAQUE";
+            }
+        }
+        function calcular(el) {
+            const row = el.closest('tr');
+            const h = parseFloat(row.querySelector('.in-h').value) || 0;
+            const m = parseFloat(row.querySelector('.in-m').value) || 0;
+            const res = row.querySelector('.label-descuento');
+
+            const minutosTotales = (h * 60) + m;
+            const monto = minutosTotales * 0.0275;
+            res.innerText = "$ " + monto.toFixed(2);
+        }
         const input = document.getElementById('periodSearchInput');
         const container = document.getElementById('periodSearchResults');
         input.addEventListener('input', function() {
@@ -150,14 +186,11 @@
             });
             container.style.display = found > 0 ? 'block' : 'none';
         });
-
         document.querySelectorAll('.search-item').forEach(item => {
             item.addEventListener('click', function() {
                 window.location.href = '/Ausentismo/ReporteEmpaque?periodId=' + this.getAttribute('data-id');
             });
         });
-
-        // Guardado AJAX
         function saveObservation(element) {
             const text = element.innerText.trim();
             element.classList.add('saving');

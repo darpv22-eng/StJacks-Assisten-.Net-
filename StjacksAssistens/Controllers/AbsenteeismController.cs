@@ -147,6 +147,121 @@ namespace StjacksAssistens.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+        // VISTA: Carga el reporte de horas
+        public async Task<IActionResult> ReporteMecanicosHoras(int? periodId)
+        {
+            if (periodId == null || periodId == 0)
+            {
+                var ultimo = await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
+                return RedirectToAction(nameof(ReporteMecanicosHoras), new { periodId = ultimo?.Id });
+            }
+
+            var periodo = await _context.Periodss.FindAsync(periodId);
+            if (periodo == null) return NotFound();
+
+            ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
+
+            var mecanicos = await _context.Operators
+                .Include(o => o.Category)
+                .Where(o => o.Category.Name == "Mecanicos")
+                .ToListAsync();
+
+            var asistencias = await _context.Attendence.Where(a => a.PeriodId == periodId).ToListAsync();
+            var listaMecanicos = new List<EmpleadoAusentismoRow>();
+
+            foreach (var mec in mecanicos)
+            {
+                var asisMec = asistencias.Where(a => a.OperatorsId == mec.Id).ToList();
+                var registroBase = asisMec.FirstOrDefault(a => a.Hours > 0 || a.Minutes > 0) ?? asisMec.FirstOrDefault();
+
+                listaMecanicos.Add(new EmpleadoAusentismoRow
+                {
+                    Codigo = mec.Code,
+                    Nombre = mec.Name,
+                    HorasAusente = registroBase?.Hours ?? 0,
+                    MinutosAusente = registroBase?.Minutes ?? 0,
+                    Semanas = new List<SemanaDatos> {
+                new SemanaDatos { Motivo = asisMec.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation }
+            }
+                });
+            }
+
+            return View(new MecanicosReportViewModel { Periodo = periodo, Empleados = listaMecanicos });
+        }
+
+        // API: Guarda las horas (AJAX)
+        [HttpPost]
+        [HttpPost]
+        public async Task<IActionResult> GuardarHorasMecanico([FromBody] StjacksAssistens.Models.TimeRequest request)
+        {
+            // 1. Validación de entrada
+            if (request == null || string.IsNullOrEmpty(request.OperatorCode))
+                return BadRequest("Datos incompletos.");
+
+            // 2. Convertimos el código a int antes de la consulta (más rápido y seguro)
+            if (!int.TryParse(request.OperatorCode, out int codeInt))
+                return BadRequest("El código del operario debe ser numérico.");
+
+            // 3. Buscamos al operario
+            var operario = await _context.Operators
+                .FirstOrDefaultAsync(o => o.Code == codeInt);
+
+            if (operario == null) return NotFound("Operario no encontrado.");
+
+            // 4. Buscamos los registros
+            var asistencias = await _context.Attendence
+                .Where(a => a.OperatorsId == operario.Id && a.PeriodId == request.PeriodId)
+                .ToListAsync();
+
+            if (!asistencias.Any())
+                return NotFound("No hay registros de asistencia para este periodo.");
+
+            // 5. Actualizamos
+            foreach (var item in asistencias)
+            {
+                // Importante: Tu modelo Attendence DEBE tener: public int? Hours { get; set; }
+                item.Hours = request.Hours;
+                item.Minutes = request.Minutes;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Esto te avisará si hay un error de SQL (como falta de permisos o columnas)
+                return StatusCode(500, $"Error al guardar: {ex.Message}");
+            }
+        }
+
+        // API: Guarda la observación (AJAX)
+        [HttpPost]
+        public async Task<IActionResult> GuardarObservacion([FromBody] StjacksAssistens.Models.ObservationRequest request)
+        {
+            if (request == null) return BadRequest("Datos inválidos");
+
+            var operario = await _context.Operators
+                .FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
+
+            if (operario == null) return NotFound();
+
+            var asistencias = await _context.Attendence
+                .Where(a => a.OperatorsId == operario.Id && a.PeriodId == request.PeriodId)
+                .ToListAsync();
+
+            foreach (var item in asistencias)
+            {
+                item.Observation = request.Observation;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+
+
 
 
         #region REPORTE EMPAQUE
