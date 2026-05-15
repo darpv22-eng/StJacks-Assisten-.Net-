@@ -157,31 +157,49 @@ namespace StjacksAssistens.Controllers
             }
 
             var periodo = await _context.Periodss.FindAsync(periodId);
-            if (periodo == null) return NotFound();
-
             ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
 
-            var mecanicos = await _context.Operators
-                .Include(o => o.Category)
-                .Where(o => o.Category.Name == "Mecanicos")
+            // 1. Traemos las asistencias del periodo que tengan "PP"
+            var asistenciasConPP = await _context.Attendence
+                .Where(a => a.PeriodId == periodId && a.Status == "PP")
                 .ToListAsync();
 
-            var asistencias = await _context.Attendence.Where(a => a.PeriodId == periodId).ToListAsync();
+            // 2. Obtenemos los IDs de los mecánicos que sí tienen faltas
+            var idsMecanicosConFalta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
+
+            // 3. Traemos solo a esos mecánicos
+            var mecanicos = await _context.Operators
+                .Include(o => o.Category)
+                .Where(o => idsMecanicosConFalta.Contains(o.Id))
+                .ToListAsync();
+
             var listaMecanicos = new List<EmpleadoAusentismoRow>();
 
             foreach (var mec in mecanicos)
             {
-                var asisMec = asistencias.Where(a => a.OperatorsId == mec.Id).ToList();
-                var registroBase = asisMec.FirstOrDefault(a => a.Hours > 0 || a.Minutes > 0) ?? asisMec.FirstOrDefault();
+                // Traemos TODA la asistencia de este mecánico en el periodo (para ver horas y fechas)
+                var asisMec = await _context.Attendence
+                    .Where(a => a.OperatorsId == mec.Id && a.PeriodId == periodId)
+                    .ToListAsync();
+
+                var registroConHoras = asisMec.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
 
                 listaMecanicos.Add(new EmpleadoAusentismoRow
                 {
                     Codigo = mec.Code,
                     Nombre = mec.Name,
-                    HorasAusente = registroBase?.Hours ?? 0,
-                    MinutosAusente = registroBase?.Minutes ?? 0,
+                    HorasAusente = registroConHoras?.Hours ?? 0,
+                    MinutosAusente = registroConHoras?.Minutes ?? 0,
                     Semanas = new List<SemanaDatos> {
-                new SemanaDatos { Motivo = asisMec.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation }
+                new SemanaDatos { 
+                    // Guardamos las fechas de los días que tienen PP para mostrarlos en la vista
+                    Lunes = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Monday && a.Status == "PP")?.AttendanceDate,
+                    Martes = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Tuesday && a.Status == "PP")?.AttendanceDate,
+                    Miercoles = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Wednesday && a.Status == "PP")?.AttendanceDate,
+                    Jueves = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Thursday && a.Status == "PP")?.AttendanceDate,
+                    Viernes = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Friday && a.Status == "PP")?.AttendanceDate,
+                    Motivo = asisMec.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation ?? "PP"
+                }
             }
                 });
             }

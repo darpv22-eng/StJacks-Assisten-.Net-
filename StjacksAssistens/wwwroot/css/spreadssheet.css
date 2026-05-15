@@ -1,130 +1,105 @@
-﻿/*Mecanicos*/
-.search-results-container {
-    position: absolute;
-    z-index: 1000;
-    width: 100%;
-    max-height: 250px;
-    overflow-y: auto;
-    background: white;
-    border: 1px solid #ddd;
-    display: none; /* Oculto por defecto */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+﻿/* ==========================================================================
+   BASES GENERALES - ESTILO EXCEL (Compartido por todos los reportes)
+   ========================================================================== */
+.report-container {
+    padding: 20px;
+    background-color: white;
+    font-family: Arial, sans-serif;
 }
 
-.search-item {
-    padding: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    font-size: 0.85rem;
-    display: none; /* Las filas no existen hasta que coincidan */
-}
-
-    .search-item:hover {
-        background-color: #f1f1f1;
-        color: #000;
-    }
-
-    .search-item strong {
-        color: #5b2c6f;
-    }
-
-@media print {
-    .no-print {
-        display: none !important;
-    }
-}
-/* Mantenemos tus estilos originales */
-.search-results-container {
-    position: absolute;
-    width: 100%;
-    z-index: 1000;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 0 0 5px 5px;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.search-item {
-    padding: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #f8f9fa;
-    transition: background 0.2s;
-}
-
-    .search-item:hover {
-        background-color: #f1f3f5;
-    }
-
-.editable-motivo {
-    min-height: 25px;
-    outline: none;
-    padding: 2px;
-}
-
-    .editable-motivo.saving {
-        background-color: #fff3cd;
-        opacity: 0.7;
-    }
-
-/* Estilos para el Modo Hora (Nuevos) */
-.modo-hora-col {
-    display: none; /* Oculto por defecto */
-}
-
-.input-time {
-    width: 45px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    text-align: center;
-    font-size: 0.9em;
-}
-
-.time-input-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-}
-
-@media print {
-    .no-print, .col-tiempo-input {
-        display: none !important;
-    }
-
-    .modo-hora-col {
-        display: table-cell !important;
-    }
-}
-
-
-/*Operarios*/
 .table-excel {
     width: 100%;
     border-collapse: collapse;
-    font-family: Arial, sans-serif;
-    font-size: 11px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #000;
 }
 
     .table-excel th, .table-excel td {
         border: 1px solid #000;
         padding: 4px;
         text-align: center;
+        vertical-align: middle;
+        font-size: 11px;
     }
 
-.header-purple {
-    background-color: #E2D9F3 !important;
+.header-purple, .header-bg {
+    background-color: #e2d9f3 !important;
     font-weight: bold;
+    text-transform: uppercase;
 }
 
-.no-print {
-    @media print {
-        display: none;
+/* --- Elementos Comunes --- */
+.text-start {
+    text-align: left !important;
+}
+
+.saving {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.only-print {
+    display: none;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .only-print {
+        display: inline-block;
+    }
+
+    input {
+        border: none !important;
+        background: transparent !important;
     }
 }
 
+/* ==========================================================================
+   BLOQUE: MECÁNICOS (Reporte por Horas)
+   ========================================================================== */
+/* Inputs específicos para el control de tiempo H:M */
+.in-h, .in-m {
+    width: 35px;
+    border: 1px solid #ccc;
+    text-align: center;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.label-descuento {
+    color: #d00;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Buscador de Periodos (Dropdown) */
+.search-results-container {
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.search-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+    .search-item:hover {
+        background-color: #f8f9fa;
+    }
+
+/* ==========================================================================
+   BLOQUE: OPERARIOS (Reporte por Día)
+   ========================================================================== */
 .signature-line {
     border-top: 1px solid #000;
     margin-top: 40px;
@@ -133,19 +108,14 @@
     margin-right: auto;
 }
 
-.text-start {
-    text-align: left !important;
-}
-
-
-
-/* Estilos para la edición */
+/* Estilos para la edición de motivos/observaciones */
 .editable-motivo {
     min-height: 25px;
     cursor: text;
     padding: 2px;
     border-radius: 4px;
     transition: background 0.3s;
+    outline: none;
 }
 
     .editable-motivo:hover {
@@ -154,31 +124,14 @@
     }
 
     .editable-motivo:focus {
-        outline: none;
         background-color: #fff;
         border: 1px solid #6f42c1;
         box-shadow: 0 0 5px rgba(111, 66, 193, 0.3);
     }
 
-.saving {
-    opacity: 0.5;
-    cursor: wait;
-}
-
-@media print {
-    .no-print {
-        display: none !important;
-    }
-
-    .editable-motivo {
-        border: none !important;
-    }
-}
-
-
-
-/*EMPAQUE*/
-/* Estilos para los inputs de tiempo */
+/* ==========================================================================
+   BLOQUE: EMPAQUE
+   ========================================================================== */
 .time-input-group {
     display: flex;
     align-items: center;
@@ -194,42 +147,41 @@
     font-size: 13px;
 }
 
-/* Columnas de hora ocultas por defecto en pantalla */
 .modo-hora-col {
     display: none;
 }
 
-.label-descuento {
-    color: #d00;
-    font-weight: bold;
+/* ==========================================================================
+   SECCIÓN DE FIRMAS (General para reportes)
+   ========================================================================== */
+.signature-section {
+    margin-top: 60px;
+    display: flex;
+    justify-content: space-around;
 }
 
-/* CONFIGURACIÓN DE IMPRESIÓN */
+.signature-box {
+    width: 250px;
+    text-align: center;
+    padding-top: 5px;
+    font-size: 12px;
+}
+
 @media print {
-    .no-print {
-        display: none !important;
-    }
-    /* Ocultamos la columna de los cuadritos de tiempo al imprimir */
-    .col-tiempo-input {
-        display: none !important;
-    }
-    /* Aseguramos que el descuento sí se vea */
-    .modo-hora-col {
-        display: table-cell !important;
-    }
-
-    input {
-        border: none !important;
-        background: transparent !important;
-    }
-
-    /* Ajuste de firmas para que no se corten */
     .signature-section {
         page-break-inside: avoid;
         margin-top: 50px !important;
     }
-}
-/*Boton general de planilla si por horas o por dias
----------------------------------------------------------------------------*/
 
-/*-------------------------------------------------------------------------º------------------------------------------------*/
+    .col-tiempo-input {
+        display: none !important;
+    }
+
+    .modo-hora-col {
+        display: table-cell !important;
+    }
+
+    .editable-motivo {
+        border: none !important;
+    }
+}

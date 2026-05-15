@@ -3,7 +3,6 @@
     Layout = null;
     var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
 }
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,48 +11,67 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
-    <style>
-        .editable-motivo {
-            min-height: 25px;
-            border: 1px solid transparent;
-        }
-
-            .editable-motivo:hover {
-                border: 1px dashed #ccc;
-                cursor: text;
-            }
-
-        .in-h, .in-m {
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-align: center;
-        }
-    </style>
 </head>
 <body class="p-4 bg-white">
+
+    @* Buscador de Periodos (No se imprime) *@
     <div class="no-print p-3 mb-4 shadow-sm rounded border bg-light">
         <div class="row align-items-center">
             <div class="col-md-5 position-relative">
-                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Buscar periodo...">
+                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Cambiar Periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Buscar periodo..." autocomplete="off">
+                <div id="periodSearchResults" class="search-results-container" style="display: none;">
+                    @foreach (var p in listaPeriodos)
+                    {
+                        <div class="search-item" data-id="@p.Id" data-filter="@p.Description.ToLower() @p.StartDate.ToString("dd/MM/yyyy")">
+                            <strong>@p.Description</strong><br>
+                            <span class="text-muted small">@p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString()</span>
+                        </div>
+                    }
+                </div>
             </div>
             <div class="col-md-7 text-end">
-                <button onclick="window.print()" class="btn btn-dark btn-sm"><i class="bi bi-printer"></i> Imprimir</button>
-                <a href="/Absenteeism/ReporteMecanicos?periodId=@Model.Periodo.Id" class="btn btn-primary btn-sm">Ver por Días</a>
+                <button onclick="window.print()" class="btn btn-dark btn-sm">
+                    <i class="bi bi-printer"></i> Imprimir Reporte
+                </button>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Regresar
+                </a>
             </div>
         </div>
     </div>
 
-    <h5 class="fw-bold text-decoration-underline mb-4 text-center">REPORTE DE DESCUENTOS POR HORA - MANTENIMIENTO</h5>
+    @* Encabezado del Reporte *@
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE DESCUENTOS POR HORA (MECÁNICOS)</span>
+    </div>
 
-    <table class="table-excel w-100">
+    <table class="table-excel mb-3">
+        <tr class="header-purple">
+            <td style="width: 10%;">CDC</td>
+            <td style="width: 40%;">Nombre del Área, Depto. o Gerencia</td>
+            <td style="width: 20%;">Tipo de Planilla</td>
+            <td style="width: 30%;">Período de Pago</td>
+        </tr>
+        <tr>
+            <td>409</td>
+            <td>MANTENIMIENTO (MECÁNICOS)</td>
+            <td>14 Días (Catorcenal)</td>
+            <td class="fw-bold">Del @Model.Periodo.StartDate.ToString("dd/MM/yyyy") al @Model.Periodo.EndDate.ToString("dd/MM/yyyy")</td>
+        </tr>
+    </table>
+
+    @* Tabla Principal *@
+    <table class="table-excel">
         <thead>
             <tr class="header-purple">
-                <th>No.</th>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Tiempo (H:M)</th>
-                <th>Descuento ($)</th>
-                <th>Observaciones</th>
+                <th style="width: 30px;">No.</th>
+                <th style="width: 65px;">Código</th>
+                <th>Nombre del Empleado</th>
+                <th style="width: 110px;">Tiempo (H:M)</th>
+                <th style="width: 100px;">Descuento</th>
+                <th>Motivo de la Ausencia / Observaciones</th>
             </tr>
         </thead>
         <tbody>
@@ -65,16 +83,22 @@
                     <td class="fw-bold">@emp.Codigo</td>
                     <td class="text-start ps-2">@emp.Nombre</td>
                     <td>
-                        <div class="d-flex justify-content-center align-items-center">
-                            <input type="number" class="in-h" value="@emp.HorasAusente" oninput="calcular(this)" onblur="saveTime(this)" data-opid="@emp.Codigo" style="width:55px">
-                            <b class="mx-1">:</b>
-                            <input type="number" class="in-m" value="@emp.MinutosAusente" oninput="calcular(this)" onblur="saveTime(this)" data-opid="@emp.Codigo" style="width:55px">
+                        <div class="time-input-group no-print">
+                            <input type="number" class="in-h" value="@emp.HorasAusente"
+                                   onblur="saveTime(this)" data-opid="@emp.Codigo" placeholder="0"> :
+                            <input type="number" class="in-m" value="@emp.MinutosAusente"
+                                   onblur="saveTime(this)" data-opid="@emp.Codigo" placeholder="0">
                         </div>
+                        <span class="only-print fw-bold">@emp.HorasAusente:@emp.MinutosAusente.ToString("D2")</span>
                     </td>
-                    <td class="label-descuento fw-bold text-danger" style="width: 120px;">$ 0.00</td>
-                    <td class="p-1">
-                        <div class="editable-motivo" contenteditable="true" onblur="saveObservation(this)" data-opid="@emp.Codigo">
-                            @(emp.Semanas.FirstOrDefault()?.Motivo)
+                    <td class="label-descuento" data-opid="@emp.Codigo">
+                        $ 0.00
+                    </td>
+                    <td class="text-start p-1">
+                        <div class="editable-motivo" contenteditable="true"
+                             data-opid="@emp.Codigo" data-period="@Model.Periodo.Id"
+                             onblur="saveObservation(this)">
+                            @emp.Semanas.FirstOrDefault()?.Motivo
                         </div>
                     </td>
                 </tr>
@@ -82,56 +106,105 @@
         </tbody>
     </table>
 
-    <script>
-        // Importante: Cambia 'Absenteeism' si tu controlador tiene otro nombre
-        const CONTROLLER = "Absenteeism";
+    @* Sección de Firmas *@
+    <div class="signature-section mt-5">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="fw-bold">Elaborado por:</div>
+            <div class="small">Digitador de Planilla</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="fw-bold">Revisado por:</div>
+            <div class="small">Jefe de Mantenimiento</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="fw-bold">Autorizado por:</div>
+            <div class="small">Recursos Humanos</div>
+        </div>
+    </div>
 
-        function calcular(el) {
-            const row = el.closest('tr');
-            const h = parseInt(row.querySelector('.in-h').value) || 0;
-            const m = parseInt(row.querySelector('.in-m').value) || 0;
-            const res = row.querySelector('.label-descuento');
-            // Cálculo: (minutos totales) * tarifa por minuto
-            res.innerText = "$ " + (((h * 60) + m) * 0.0275).toFixed(2);
+    <script>
+        // --- CÁLCULO DE DESCUENTO ---
+        function calcularDescuento() {
+            const factorSueldoMinuto = 0.0275; // Ajustar según política de la empresa
+
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const h = parseInt(row.querySelector('.in-h').value) || 0;
+                const m = parseInt(row.querySelector('.in-m').value) || 0;
+                const lbl = row.querySelector('.label-descuento');
+
+                const totalMinutos = (h * 60) + m;
+                const totalDsc = totalMinutos * factorSueldoMinuto;
+
+                lbl.innerText = "$ " + totalDsc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            });
         }
 
+        // --- GUARDAR TIEMPO ---
         async function saveTime(el) {
             const row = el.closest('tr');
-            const data = {
-                OperatorCode: el.getAttribute('data-opid').toString(),
-                PeriodId: parseInt("@Model.Periodo.Id"),
-                Hours: parseInt(row.querySelector('.in-h').value) || 0,
-                Minutes: parseInt(row.querySelector('.in-m').value) || 0
-            };
+            const h = row.querySelector('.in-h').value;
+            const m = row.querySelector('.in-m').value;
 
-            const resp = await fetch(`/${CONTROLLER}/GuardarHorasMecanico`, {
+            // Efecto visual de guardado
+            row.classList.add('saving');
+
+            await fetch('/Ausentismo/GuardarHorasMecanico', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    OperatorCode: el.getAttribute('data-opid'),
+                    PeriodId: @Model.Periodo.Id,
+                    Hours: parseInt(h) || 0,
+                    Minutes: parseInt(m) || 0
+                })
             });
 
-            if(resp.ok) console.log("Tiempo guardado");
+            row.classList.remove('saving');
+            calcularDescuento();
         }
 
-        async function saveObservation(el) {
-            const data = {
-                OperatorCode: el.getAttribute('data-opid').toString(),
-                PeriodId: parseInt("@Model.Periodo.Id"),
-                Observation: el.innerText.trim()
-            };
-
-            const resp = await fetch(`/${CONTROLLER}/GuardarObservacion`, {
+        // --- GUARDAR OBSERVACIÓN ---
+        function saveObservation(element) {
+            const text = element.innerText.trim();
+            fetch('/Ausentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    OperatorCode: element.getAttribute('data-opid'),
+                    PeriodId: parseInt(element.getAttribute('data-period')),
+                    Observation: text
+                })
             });
-
-            if(resp.ok) console.log("Observación guardada");
         }
 
-        window.onload = () => {
-            document.querySelectorAll('.in-h').forEach(el => calcular(el));
-        };
+        // --- BUSCADOR ---
+        const input = document.getElementById('periodSearchInput');
+        const container = document.getElementById('periodSearchResults');
+        const allItems = document.querySelectorAll('.search-item');
+
+        input.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            if (!searchText) { container.style.display = 'none'; return; }
+            let found = 0;
+            allItems.forEach(item => {
+                if (item.getAttribute('data-filter').includes(searchText)) {
+                    item.style.display = 'block'; found++;
+                } else item.style.display = 'none';
+            });
+            container.style.display = found ? 'block' : 'none';
+        });
+
+        allItems.forEach(item => {
+            item.addEventListener('click', () => {
+                window.location.href = '?periodId=' + item.getAttribute('data-id');
+            });
+        });
+
+        // Inicializar cálculos
+        window.onload = calcularDescuento;
     </script>
 </body>
 </html>
