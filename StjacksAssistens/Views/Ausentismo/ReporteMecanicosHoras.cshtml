@@ -1,4 +1,4 @@
-﻿@model StjacksAssistens.Models.MecanicosReportViewModel
+﻿@model MecanicosReportViewModel
 @{
     Layout = null;
     var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
@@ -7,32 +7,31 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title>Reporte Horas - @Model.Periodo.Description</title>
+    <title>Reporte Ausentismo - @Model.Periodo.Description</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
 </head>
 <body class="p-4 bg-white">
 
-    @* Buscador de Periodos (No se imprime) *@
     <div class="no-print p-3 mb-4 shadow-sm rounded border bg-light">
         <div class="row align-items-center">
             <div class="col-md-5 position-relative">
-                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Cambiar Periodo:</label>
-                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Buscar periodo..." autocomplete="off">
+                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Digite fecha o nombre del periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Ej: 2026..." autocomplete="off">
                 <div id="periodSearchResults" class="search-results-container" style="display: none;">
                     @foreach (var p in listaPeriodos)
                     {
                         <div class="search-item" data-id="@p.Id" data-filter="@p.Description.ToLower() @p.StartDate.ToString("dd/MM/yyyy")">
                             <strong>@p.Description</strong><br>
-                            <span class="text-muted small">@p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString()</span>
+                            <span class="text-muted small">Rango: @p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString()</span>
                         </div>
                     }
                 </div>
             </div>
             <div class="col-md-7 text-end">
                 <button onclick="window.print()" class="btn btn-dark btn-sm">
-                    <i class="bi bi-printer"></i> Imprimir Reporte
+                    <i class="bi bi-printer"></i> Imprimir Documento
                 </button>
                 <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-arrow-left"></i> Regresar
@@ -41,10 +40,9 @@
         </div>
     </div>
 
-    @* Encabezado del Reporte *@
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
-        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE DESCUENTOS POR HORA (MECÁNICOS)</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO (POR DÍA)</span>
     </div>
 
     <table class="table-excel mb-3">
@@ -62,111 +60,152 @@
         </tr>
     </table>
 
-    @* Tabla Principal *@
     <table class="table-excel">
         <thead>
             <tr class="header-purple">
-                <th style="width: 30px;">No.</th>
-                <th style="width: 65px;">Código</th>
-                <th>Nombre del Empleado</th>
-                <th style="width: 110px;">Tiempo (H:M)</th>
-                <th style="width: 100px;">Descuento</th>
-                <th>Motivo de la Ausencia / Observaciones</th>
+                <th rowspan="2" style="width: 30px;">No.</th>
+                <th rowspan="2" style="width: 60px;">Código</th>
+                <th rowspan="2">Nombre del Empleado</th>
+                <th colspan="5">Días de la Semana</th>
+                <th rowspan="2">Motivo / Observaciones</th>
+            </tr>
+            <tr class="header-purple">
+                <th style="width: 80px;">Lun</th>
+                <th style="width: 80px;">Mar</th>
+                <th style="width: 80px;">Mie</th>
+                <th style="width: 80px;">Jue</th>
+                <th style="width: 80px;">Vie</th>
             </tr>
         </thead>
         <tbody>
-            @for (int i = 0; i < Model.Empleados.Count; i++)
+            @{
+                int count = 1;
+                var empleadosConAusencias = Model.Empleados.Where(emp => emp.Semanas.Any(s => s.Lunes.HasValue || s.Martes.HasValue || s.Miercoles.HasValue || s.Jueves.HasValue || s.Viernes.HasValue)).ToList();
+            }
+
+            @foreach (var emp in empleadosConAusencias)
             {
-                var emp = Model.Empleados[i];
+                // Punto de corte exacto (Día 7 del período)
+                var finSemana1 = Model.Periodo.StartDate.AddDays(6).Date;
+
+                // Extraemos y aplanamos todas las fechas reales que tiene registradas el empleado
+                var todosLosLunes = emp.Semanas.Where(s => s.Lunes.HasValue).Select(s => s.Lunes.Value.Date).ToList();
+                var todosLosMartes = emp.Semanas.Where(s => s.Martes.HasValue).Select(s => s.Martes.Value.Date).ToList();
+                var todosLosMiercoles = emp.Semanas.Where(s => s.Miercoles.HasValue).Select(s => s.Miercoles.Value.Date).ToList();
+                var todosLosJueves = emp.Semanas.Where(s => s.Jueves.HasValue).Select(s => s.Jueves.Value.Date).ToList();
+                var todosLosViernes = emp.Semanas.Where(s => s.Viernes.HasValue).Select(s => s.Viernes.Value.Date).ToList();
+
+                // Intentamos capturar los motivos correspondientes a cada bloque semanal
+                var motivoSem1 = emp.Semanas.FirstOrDefault(s =>
+                (s.Lunes.HasValue && s.Lunes.Value.Date <= finSemana1) ||
+                (s.Martes.HasValue && s.Martes.Value.Date <= finSemana1) ||
+                (s.Miercoles.HasValue && s.Miercoles.Value.Date <= finSemana1) ||
+                (s.Jueves.HasValue && s.Jueves.Value.Date <= finSemana1) ||
+                (s.Viernes.HasValue && s.Viernes.Value.Date <= finSemana1))?.Motivo ?? "";
+
+                var motivoSem2 = emp.Semanas.FirstOrDefault(s =>
+                (s.Lunes.HasValue && s.Lunes.Value.Date > finSemana1) ||
+                (s.Martes.HasValue && s.Martes.Value.Date > finSemana1) ||
+                (s.Miercoles.HasValue && s.Miercoles.Value.Date > finSemana1) ||
+                (s.Jueves.HasValue && s.Jueves.Value.Date > finSemana1) ||
+                (s.Viernes.HasValue && s.Viernes.Value.Date > finSemana1))?.Motivo ?? "";
+
+                // Clasificación estricta por celda para la FILA Superior (Semana 1)
+                var lunSem1 = todosLosLunes.FirstOrDefault(d => d <= finSemana1);
+                var marSem1 = todosLosMartes.FirstOrDefault(d => d <= finSemana1);
+                var mieSem1 = todosLosMiercoles.FirstOrDefault(d => d <= finSemana1);
+                var jueSem1 = todosLosJueves.FirstOrDefault(d => d <= finSemana1);
+                var vieSem1 = todosLosViernes.FirstOrDefault(d => d <= finSemana1);
+
+                // Clasificación estricta por celda para la FILA Inferior (Semana 2)
+                var lunSem2 = todosLosLunes.FirstOrDefault(d => d > finSemana1);
+                var marSem2 = todosLosMartes.FirstOrDefault(d => d > finSemana1);
+                var mieSem2 = todosLosMiercoles.FirstOrDefault(d => d > finSemana1);
+                var jueSem2 = todosLosJueves.FirstOrDefault(d => d > finSemana1);
+                var vieSem2 = todosLosViernes.FirstOrDefault(d => d > finSemana1);
+
+                @* FILA SUPERIOR: SEMANA 1 *@
                 <tr>
-                    <td>@(i + 1)</td>
-                    <td class="fw-bold">@emp.Codigo</td>
-                    <td class="text-start ps-2">@emp.Nombre</td>
-                    <td>
-                        <div class="time-input-group no-print">
-                            <input type="number" class="in-h" value="@emp.HorasAusente"
-                                   onblur="saveTime(this)" data-opid="@emp.Codigo" placeholder="0"> :
-                            <input type="number" class="in-m" value="@emp.MinutosAusente"
-                                   onblur="saveTime(this)" data-opid="@emp.Codigo" placeholder="0">
-                        </div>
-                        <span class="only-print fw-bold">@emp.HorasAusente:@emp.MinutosAusente.ToString("D2")</span>
-                    </td>
-                    <td class="label-descuento" data-opid="@emp.Codigo">
-                        $ 0.00
-                    </td>
-                    <td class="text-start p-1">
-                        <div class="editable-motivo" contenteditable="true"
-                             data-opid="@emp.Codigo" data-period="@Model.Periodo.Id"
-                             onblur="saveObservation(this)">
-                            @emp.Semanas.FirstOrDefault()?.Motivo
+                    <td rowspan="2">@count</td>
+                    <td rowspan="2" class="fw-bold">@emp.Codigo</td>
+                    <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
+
+                    <td>@(lunSem1 != default ? lunSem1.ToString("dd-MMM") : "")</td>
+                    <td>@(marSem1 != default ? marSem1.ToString("dd-MMM") : "")</td>
+                    <td>@(mieSem1 != default ? mieSem1.ToString("dd-MMM") : "")</td>
+                    <td>@(jueSem1 != default ? jueSem1.ToString("dd-MMM") : "")</td>
+                    <td>@(vieSem1 != default ? vieSem1.ToString("dd-MMM") : "")</td>
+
+                    <td class="text-start small italic p-1">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                            @motivoSem1
                         </div>
                     </td>
                 </tr>
+
+                @* FILA INFERIOR: SEMANA 2 *@
+                <tr>
+                    <td>@(lunSem2 != default ? lunSem2.ToString("dd-MMM") : "")</td>
+                    <td>@(marSem2 != default ? marSem2.ToString("dd-MMM") : "")</td>
+                    <td>@(mieSem2 != default ? mieSem2.ToString("dd-MMM") : "")</td>
+                    <td>@(jueSem2 != default ? jueSem2.ToString("dd-MMM") : "")</td>
+                    <td>@(vieSem2 != default ? vieSem2.ToString("dd-MMM") : "")</td>
+
+                    <td class="text-start small italic p-1">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                            @motivoSem2
+                        </div>
+                    </td>
+                </tr>
+                count++;
             }
         </tbody>
     </table>
 
-    @* Sección de Firmas *@
-    <div class="signature-section mt-5">
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <div class="fw-bold">Elaborado por:</div>
-            <div class="small">Digitador de Planilla</div>
-        </div>
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <div class="fw-bold">Revisado por:</div>
-            <div class="small">Jefe de Mantenimiento</div>
-        </div>
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <div class="fw-bold">Autorizado por:</div>
-            <div class="small">Recursos Humanos</div>
+    @* Firmas *@
+    <div class="container-fluid text-center mt-5">
+        <div class="row">
+            <div class="col-4">
+                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
+                <div class="fw-bold small">Elaborado por: Willian Alexander</div>
+                <div class="small">Digitador</div>
+            </div>
+            <div class="col-4">
+                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
+                <div class="fw-bold small">Revisado por: Ing. Luis Alonso Barahona</div>
+                <div class="small">Jefe de Confección y Empaque</div>
+            </div>
+            <div class="col-4">
+                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
+                <div class="fw-bold small">Autorizado por: Ing. Johanna Quiñónez</div>
+                <div class="small">Directora de Producción</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- CÁLCULO DE DESCUENTO ---
-        function calcularDescuento() {
-            const factorSueldoMinuto = 0.0275; // Ajustar según política de la empresa
+        const input = document.getElementById('periodSearchInput');
+        const container = document.getElementById('periodSearchResults');
+        const allItems = document.querySelectorAll('.search-item');
 
-            document.querySelectorAll('tbody tr').forEach(row => {
-                const h = parseInt(row.querySelector('.in-h').value) || 0;
-                const m = parseInt(row.querySelector('.in-m').value) || 0;
-                const lbl = row.querySelector('.label-descuento');
-
-                const totalMinutos = (h * 60) + m;
-                const totalDsc = totalMinutos * factorSueldoMinuto;
-
-                lbl.innerText = "$ " + totalDsc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        input.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            if (searchText.length === 0) { container.style.display = 'none'; return; }
+            let foundCount = 0;
+            allItems.forEach(item => {
+                if (item.getAttribute('data-filter').includes(searchText)) {
+                    item.style.display = 'block'; foundCount++;
+                } else { item.style.display = 'none'; }
             });
-        }
+            container.style.display = foundCount > 0 ? 'block' : 'none';
+        });
 
-        // --- GUARDAR TIEMPO ---
-        async function saveTime(el) {
-            const row = el.closest('tr');
-            const h = row.querySelector('.in-h').value;
-            const m = row.querySelector('.in-m').value;
-
-            // Efecto visual de guardado
-            row.classList.add('saving');
-
-            await fetch('/Ausentismo/GuardarHorasMecanico', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    OperatorCode: el.getAttribute('data-opid'),
-                    PeriodId: @Model.Periodo.Id,
-                    Hours: parseInt(h) || 0,
-                    Minutes: parseInt(m) || 0
-                })
+        allItems.forEach(item => {
+            item.addEventListener('click', function() {
+                window.location.href = '/Ausentismo/ReporteMecanicos?periodId=' + this.getAttribute('data-id');
             });
+        });
 
-            row.classList.remove('saving');
-            calcularDescuento();
-        }
-
-        // --- GUARDAR OBSERVACIÓN ---
         function saveObservation(element) {
             const text = element.innerText.trim();
             fetch('/Ausentismo/GuardarObservacion', {
@@ -179,32 +218,6 @@
                 })
             });
         }
-
-        // --- BUSCADOR ---
-        const input = document.getElementById('periodSearchInput');
-        const container = document.getElementById('periodSearchResults');
-        const allItems = document.querySelectorAll('.search-item');
-
-        input.addEventListener('input', function() {
-            const searchText = this.value.toLowerCase().trim();
-            if (!searchText) { container.style.display = 'none'; return; }
-            let found = 0;
-            allItems.forEach(item => {
-                if (item.getAttribute('data-filter').includes(searchText)) {
-                    item.style.display = 'block'; found++;
-                } else item.style.display = 'none';
-            });
-            container.style.display = found ? 'block' : 'none';
-        });
-
-        allItems.forEach(item => {
-            item.addEventListener('click', () => {
-                window.location.href = '?periodId=' + item.getAttribute('data-id');
-            });
-        });
-
-        // Inicializar cálculos
-        window.onload = calcularDescuento;
     </script>
 </body>
 </html>
