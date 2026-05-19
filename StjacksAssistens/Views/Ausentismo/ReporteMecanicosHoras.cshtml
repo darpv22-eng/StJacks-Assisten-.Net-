@@ -11,6 +11,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
+    <style>
+        .editable-motivo {
+            min-height: 25px;
+            cursor: text;
+        }
+
+            .editable-motivo:focus {
+                background-color: #f8f9fa;
+                outline: 1px solid #6f42c1;
+                border-radius: 4px;
+            }
+    </style>
 </head>
 <body class="p-4 bg-white">
 
@@ -85,39 +97,37 @@
 
             @foreach (var emp in empleadosConAusencias)
             {
-                // Punto de corte exacto (Día 7 del período)
                 var finSemana1 = Model.Periodo.StartDate.AddDays(6).Date;
 
-                // Extraemos y aplanamos todas las fechas reales que tiene registradas el empleado
                 var todosLosLunes = emp.Semanas.Where(s => s.Lunes.HasValue).Select(s => s.Lunes.Value.Date).ToList();
                 var todosLosMartes = emp.Semanas.Where(s => s.Martes.HasValue).Select(s => s.Martes.Value.Date).ToList();
                 var todosLosMiercoles = emp.Semanas.Where(s => s.Miercoles.HasValue).Select(s => s.Miercoles.Value.Date).ToList();
                 var todosLosJueves = emp.Semanas.Where(s => s.Jueves.HasValue).Select(s => s.Jueves.Value.Date).ToList();
                 var todosLosViernes = emp.Semanas.Where(s => s.Viernes.HasValue).Select(s => s.Viernes.Value.Date).ToList();
 
-                // Intentamos capturar los motivos correspondientes a cada bloque semanal
-                var motivoSem1 = emp.Semanas.FirstOrDefault(s =>
+                var registroSem1 = emp.Semanas.FirstOrDefault(s =>
                 (s.Lunes.HasValue && s.Lunes.Value.Date <= finSemana1) ||
                 (s.Martes.HasValue && s.Martes.Value.Date <= finSemana1) ||
                 (s.Miercoles.HasValue && s.Miercoles.Value.Date <= finSemana1) ||
                 (s.Jueves.HasValue && s.Jueves.Value.Date <= finSemana1) ||
-                (s.Viernes.HasValue && s.Viernes.Value.Date <= finSemana1))?.Motivo ?? "";
+                (s.Viernes.HasValue && s.Viernes.Value.Date <= finSemana1));
 
-                var motivoSem2 = emp.Semanas.FirstOrDefault(s =>
+                var registroSem2 = emp.Semanas.FirstOrDefault(s =>
                 (s.Lunes.HasValue && s.Lunes.Value.Date > finSemana1) ||
                 (s.Martes.HasValue && s.Martes.Value.Date > finSemana1) ||
                 (s.Miercoles.HasValue && s.Miercoles.Value.Date > finSemana1) ||
                 (s.Jueves.HasValue && s.Jueves.Value.Date > finSemana1) ||
-                (s.Viernes.HasValue && s.Viernes.Value.Date > finSemana1))?.Motivo ?? "";
+                (s.Viernes.HasValue && s.Viernes.Value.Date > finSemana1));
 
-                // Clasificación estricta por celda para la FILA Superior (Semana 1)
+                var motivoSem1 = registroSem1?.Motivo ?? "";
+                var motivoSem2 = registroSem2?.Motivo ?? "";
+
                 var lunSem1 = todosLosLunes.FirstOrDefault(d => d <= finSemana1);
                 var marSem1 = todosLosMartes.FirstOrDefault(d => d <= finSemana1);
                 var mieSem1 = todosLosMiercoles.FirstOrDefault(d => d <= finSemana1);
                 var jueSem1 = todosLosJueves.FirstOrDefault(d => d <= finSemana1);
                 var vieSem1 = todosLosViernes.FirstOrDefault(d => d <= finSemana1);
 
-                // Clasificación estricta por celda para la FILA Inferior (Semana 2)
                 var lunSem2 = todosLosLunes.FirstOrDefault(d => d > finSemana1);
                 var marSem2 = todosLosMartes.FirstOrDefault(d => d > finSemana1);
                 var mieSem2 = todosLosMiercoles.FirstOrDefault(d => d > finSemana1);
@@ -137,7 +147,11 @@
                     <td>@(vieSem1 != default ? vieSem1.ToString("dd-MMM") : "")</td>
 
                     <td class="text-start small italic p-1">
-                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                        <div class="editable-motivo" contenteditable="true"
+                             data-opid="@emp.Codigo"
+                             data-period="@Model.Periodo.Id"
+                             data-semana="1"
+                             onblur="saveObservation(this)">
                             @motivoSem1
                         </div>
                     </td>
@@ -152,7 +166,11 @@
                     <td>@(vieSem2 != default ? vieSem2.ToString("dd-MMM") : "")</td>
 
                     <td class="text-start small italic p-1">
-                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                        <div class="editable-motivo" contenteditable="true"
+                             data-opid="@emp.Codigo"
+                             data-period="@Model.Periodo.Id"
+                             data-semana="2"
+                             onblur="saveObservation(this)">
                             @motivoSem2
                         </div>
                     </td>
@@ -162,7 +180,6 @@
         </tbody>
     </table>
 
-    @* Firmas *@
     <div class="container-fluid text-center mt-5">
         <div class="row">
             <div class="col-4">
@@ -208,15 +225,23 @@
 
         function saveObservation(element) {
             const text = element.innerText.trim();
+
+            const payload = {
+                OperatorCode: element.getAttribute('data-opid'),
+                PeriodId: parseInt(element.getAttribute('data-period')),
+                Observation: text,
+                SemanaNumero: parseInt(element.getAttribute('data-semana'))
+            };
+
             fetch('/Ausentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    OperatorCode: element.getAttribute('data-opid'),
-                    PeriodId: parseInt(element.getAttribute('data-period')),
-                    Observation: text
-                })
-            });
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) console.error("Error en el servidor al guardar.");
+            })
+            .catch(error => console.error("Error de red:", error));
         }
     </script>
 </body>

@@ -13,6 +13,8 @@ public class EmpleadoAusencia
 {
     public string Codigo { get; set; }
     public string Nombre { get; set; }
+    public int HorasAusente { get; set; }
+    public int MinutosAusente { get; set; }
     public List<SemanaDetalle> Semanas { get; set; }
 }
 

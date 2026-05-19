@@ -7,11 +7,25 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title>Reporte Empaque - Por Día</title>
+    <title>Reporte Empaque - Descuento por Horas</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
     <style>
+        .input-time {
+            width: 45px;
+            text-align: center;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
         .editable-motivo {
             min-height: 25px;
             cursor: text;
@@ -53,7 +67,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
-        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO - EMPAQUE (POR DÍA)</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE DESCUENTOS POR HORA - EMPAQUE</span>
     </div>
 
     <table class="table-excel mb-3">
@@ -77,8 +91,10 @@
                 <th rowspan="2" style="width: 30px;">No.</th>
                 <th rowspan="2" style="width: 60px;">Código</th>
                 <th rowspan="2">Nombre del Empleado</th>
-                <th colspan="5">Días de la Semana</th>
-                <th rowspan="2">Motivo / Observaciones</th>
+                <th colspan="5">Días con Falta Parcial</th>
+                <th rowspan="2" style="width: 120px;">Tiempo (H:M)</th>
+                <th rowspan="2" style="width: 100px;">Descuento</th>
+                <th rowspan="2">Observaciones Generales</th>
             </tr>
             <tr class="header-purple">
                 <th>Lun</th>
@@ -96,6 +112,10 @@
             {
                 var sem1 = emp.Semanas.ElementAtOrDefault(0);
                 var sem2 = emp.Semanas.ElementAtOrDefault(1);
+                var totalMinutos = (emp.HorasAusente * 60) + emp.MinutosAusente;
+                var montoDescuento = totalMinutos * 0.0275;
+
+                @* Fila de la Semana 1 *@
                 <tr>
                     <td rowspan="2">@count</td>
                     <td rowspan="2" class="fw-bold">@emp.Codigo</td>
@@ -105,12 +125,25 @@
                     <td>@(sem1?.Miercoles?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem1?.Jueves?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem1?.Viernes?.ToString("dd-MMM") ?? "")</td>
+
+                    @* Inputs de tiempo, totalizadores y observaciones unificados en rowspan de 2 para no romperse *@
+                    <td rowspan="2">
+                        <div class="time-input-group" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id">
+                            <input type="number" class="input-time in-h" value="@emp.HorasAusente" min="0" oninput="calcularDescuento(this)">
+                            <b>:</b>
+                            <input type="number" class="input-time in-m" value="@emp.MinutosAusente" min="0" max="59" oninput="calcularDescuento(this)">
+                        </div>
+                    </td>
+                    <td rowspan="2">
+                        <span class="label-descuento fw-bold text-danger">$ @montoDescuento.ToString("F2")</span>
+                    </td>
                     <td class="text-start small italic p-1">
-                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" data-semana="1" onblur="saveObservation(this)">
                             @(sem1?.Motivo ?? "")
                         </div>
                     </td>
                 </tr>
+                @* Fila de la Semana 2 *@
                 <tr>
                     <td>@(sem2?.Lunes?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem2?.Martes?.ToString("dd-MMM") ?? "")</td>
@@ -118,7 +151,7 @@
                     <td>@(sem2?.Jueves?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem2?.Viernes?.ToString("dd-MMM") ?? "")</td>
                     <td class="text-start small italic p-1">
-                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" data-semana="2" onblur="saveObservation(this)">
                             @(sem2?.Motivo ?? "")
                         </div>
                     </td>
@@ -128,7 +161,6 @@
         </tbody>
     </table>
 
-    @* seccion de firmas *@ 
     <div class="container-fluid text-center mt-5" style="page-break-inside: avoid;">
         <div class="row">
             <div class="col-4">
@@ -150,26 +182,31 @@
     </div>
 
     <script>
-        // Lógica de búsqueda de periodos
-        const input = document.getElementById('periodSearchInput');
-        const container = document.getElementById('periodSearchResults');
-        input.addEventListener('input', function() {
-            const searchText = this.value.toLowerCase().trim();
-            if (searchText.length === 0) { container.style.display = 'none'; return; }
-            let found = 0;
-            document.querySelectorAll('.search-item').forEach(item => {
-                if (item.getAttribute('data-filter').includes(searchText)) {
-                    item.style.display = 'block'; found++;
-                } else item.style.display = 'none';
-            });
-            container.style.display = found > 0 ? 'block' : 'none';
-        });
+        function calcularDescuento(el) {
+            const group = el.closest('.time-input-group');
+            const row = el.closest('tr');
 
-        document.querySelectorAll('.search-item').forEach(item => {
-            item.addEventListener('click', function() {
-                window.location.href = '/Ausentismo/ReporteEmpaque?periodId=' + this.getAttribute('data-id');
+            const h = parseInt(group.querySelector('.in-h').value) || 0;
+            const m = parseInt(group.querySelector('.in-m').value) || 0;
+
+            const totalMinutos = (h * 60) + m;
+            const monto = totalMinutos * 0.0275;
+
+            row.querySelector('.label-descuento').innerText = "$ " + monto.toFixed(2);
+
+            const payload = {
+                OperatorCode: group.getAttribute('data-opid'),
+                PeriodId: parseInt(group.getAttribute('data-period')),
+                Hours: h,
+                Minutes: m
+            };
+
+            fetch('/Ausentismo/GuardarHorasEmpaque', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-        });
+        }
 
         function saveObservation(element) {
             const text = element.innerText.trim();
@@ -179,10 +216,30 @@
                 body: JSON.stringify({
                     OperatorCode: element.getAttribute('data-opid'),
                     PeriodId: parseInt(element.getAttribute('data-period')),
-                    Observation: text
+                    Observation: text,
+                    Semana: parseInt(element.getAttribute('data-semana') || "1")
                 })
             });
         }
+
+        const input = document.getElementById('periodSearchInput');
+        const container = document.getElementById('periodSearchResults');
+        input.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            if (searchText.length === 0) { container.style.display = 'none'; return; }
+            document.querySelectorAll('.search-item').forEach(item => {
+                if (item.getAttribute('data-filter').includes(searchText)) {
+                    item.style.display = 'block';
+                } else item.style.display = 'none';
+            });
+            container.style.display = 'block';
+        });
+
+        document.querySelectorAll('.search-item').forEach(item => {
+            item.addEventListener('click', function() {
+                window.location.href = '/Ausentismo/ReporteEmpaqueHoras?periodId=' + this.getAttribute('data-id');
+            });
+        });
     </script>
 </body>
 </html>

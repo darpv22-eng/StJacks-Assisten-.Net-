@@ -9,7 +9,7 @@
     }
 
     public class EmpleadoAusentismoRow
-    {
+    { 
         public int Codigo { get; set; }
         public string Nombre { get; set; }
         public List<SemanaDatos> Semanas { get; set; }
