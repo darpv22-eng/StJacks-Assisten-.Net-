@@ -8,8 +8,6 @@ namespace StjacksAssistens.Controllers
 {
     public class SpreadsheetController : Controller
     {
-
-        //Menu donde estan todas las planilas, para elegir cual se quiere ver, y luego redirige a cada una de las planillas
         private readonly ApplicationDbContext _context;
         public SpreadsheetController(ApplicationDbContext context)
         {

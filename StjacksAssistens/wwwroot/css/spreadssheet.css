@@ -129,6 +129,62 @@
         box-shadow: 0 0 5px rgba(111, 66, 193, 0.3);
     }
 
+
+/*
+
+    noche*/
+.table-excel {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 12px;
+    margin-bottom: 1rem;
+}
+
+    .table-excel th, .table-excel td {
+        border: 1px solid #c0c0c0;
+        padding: 4px 6px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+.header-purple {
+    background-color: #6f42c1 !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+.search-results-container {
+    position: absolute;
+    z-index: 1050;
+    width: 100%;
+    background: white;
+    border: 1px solid #dee2e6;
+    max-height: 250px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.search-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+    .search-item:hover {
+        background-color: #f8f9fa;
+    }
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        padding: 0 !important;
+    }
+}
+
 /* ==========================================================================
    BLOQUE: EMPAQUE
    ========================================================================== */
