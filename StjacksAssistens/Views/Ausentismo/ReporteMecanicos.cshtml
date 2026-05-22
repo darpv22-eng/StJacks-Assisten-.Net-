@@ -2,6 +2,7 @@
 @{
     Layout = null;
     var listaPeriodos = ViewBag.TodosLosPeriodos as List<StjacksAssistens.Models.Periodss>;
+    var empleadosConAusencias = Model.Empleados.Where(emp => emp.Semanas.Any(s => s.Lunes.HasValue || s.Martes.HasValue || s.Miercoles.HasValue || s.Jueves.HasValue || s.Viernes.HasValue)).ToList();
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -40,9 +41,9 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
-        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE AUSENTISMO (POR DÍA)</span>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold" style="font-size: 12px; font-family: Arial;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 13px; font-family: Arial;">REPORTE DE AUSENTISMO (POR DÍA)</span>
     </div>
 
     <table class="table-excel mb-3">
@@ -63,26 +64,24 @@
     <table class="table-excel">
         <thead>
             <tr class="header-purple">
-                <th rowspan="2" style="width: 30px;">No.</th>
-                <th rowspan="2" style="width: 60px;">Código</th>
-                <th rowspan="2">Nombre del Empleado</th>
+                <th rowspan="2" style="width: 35px;">No.</th>
+                <th rowspan="2" style="width: 65px;">Código</th>
+                <th rowspan="2" style="width: 30%;">Nombre del Empleado</th>
                 <th colspan="5">Días de la Semana</th>
                 <th rowspan="2">Motivo / Observaciones</th>
             </tr>
             <tr class="header-purple">
-                <th style="width: 80px;">Lun</th>
-                <th style="width: 80px;">Mar</th>
-                <th style="width: 80px;">Mie</th>
-                <th style="width: 80px;">Jue</th>
-                <th style="width: 80px;">Vie</th>
+                <th style="width: 65px;">Lun</th>
+                <th style="width: 65px;">Mar</th>
+                <th style="width: 65px;">Mie</th>
+                <th style="width: 65px;">Jue</th>
+                <th style="width: 65px;">Vie</th>
             </tr>
         </thead>
         <tbody>
             @{
                 int count = 1;
-                var empleadosConAusencias = Model.Empleados.Where(emp => emp.Semanas.Any(s => s.Lunes.HasValue || s.Martes.HasValue || s.Miercoles.HasValue || s.Jueves.HasValue || s.Viernes.HasValue)).ToList();
             }
-
             @foreach (var emp in empleadosConAusencias)
             {
                 var sem1 = emp.Semanas.ElementAtOrDefault(0);
@@ -97,8 +96,8 @@
                     <td>@(sem1?.Miercoles?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem1?.Jueves?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem1?.Viernes?.ToString("dd-MMM") ?? "")</td>
-                    <td class="text-start small italic p-1">
-                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                    <td class="text-start p-1">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" data-semana="1" onblur="saveObservation(this)">
                             @(sem1?.Motivo ?? "")
                         </div>
                     </td>
@@ -109,8 +108,8 @@
                     <td>@(sem2?.Miercoles?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem2?.Jueves?.ToString("dd-MMM") ?? "")</td>
                     <td>@(sem2?.Viernes?.ToString("dd-MMM") ?? "")</td>
-                    <td class="text-start small italic p-1">
-                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" onblur="saveObservation(this)">
+                    <td class="text-start p-1">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" data-semana="2" onblur="saveObservation(this)">
                             @(sem2?.Motivo ?? "")
                         </div>
                     </td>
@@ -120,29 +119,27 @@
         </tbody>
     </table>
 
-    @* Firmas *@
-    <div class="container-fluid text-center mt-5">
+    <div class="container-fluid text-center mt-5" style="page-break-inside: avoid; font-family: Arial;">
         <div class="row">
             <div class="col-4">
-                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
-                <div class="fw-bold small">Elaborado por: Willian Alexander</div>
-                <div class="small">Digitador</div>
+                <div style="border-top: 1px solid black; width: 85%; margin: 0 auto; margin-bottom: 4px;"></div>
+                <div class="fw-bold" style="font-size: 11px;">Elaborado por: Willian Alexander</div>
+                <div style="font-size: 11px; color: #333;">Digitador</div>
             </div>
             <div class="col-4">
-                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
-                <div class="fw-bold small">Revisado por: Ing. Luis Alonso Barahona</div>
-                <div class="small">Jefe de Confección y Empaque</div>
+                <div style="border-top: 1px solid black; width: 85%; margin: 0 auto; margin-bottom: 4px;"></div>
+                <div class="fw-bold" style="font-size: 11px;">Revisado por: Ing. Luis Alonso Barahona</div>
+                <div style="font-size: 11px; color: #333;">Jefe de Confección y Empaque</div>
             </div>
             <div class="col-4">
-                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;"></div>
-                <div class="fw-bold small">Autorizado por: Ing. Johanna Quiñónez</div>
-                <div class="small">Directora de Producción</div>
+                <div style="border-top: 1px solid black; width: 85%; margin: 0 auto; margin-bottom: 4px;"></div>
+                <div class="fw-bold" style="font-size: 11px;">Autorizado por: Ing. Johanna Quiñónez</div>
+                <div style="font-size: 11px; color: #333;">Directora de Producción</div>
             </div>
         </div>
     </div>
 
     <script>
-        // Lógica de búsqueda y guardado de observaciones (Igual que el original)
         const input = document.getElementById('periodSearchInput');
         const container = document.getElementById('periodSearchResults');
         const allItems = document.querySelectorAll('.search-item');
@@ -167,15 +164,17 @@
 
         function saveObservation(element) {
             const text = element.innerText.trim();
+            element.classList.add('saving');
             fetch('/Ausentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     OperatorCode: element.getAttribute('data-opid'),
                     PeriodId: parseInt(element.getAttribute('data-period')),
-                    Observation: text
+                    Observation: text,
+                    SemanaNumero: parseInt(element.getAttribute('data-semana') || "1")
                 })
-            });
+            }).then(() => element.classList.remove('saving'));
         }
     </script>
 </body>

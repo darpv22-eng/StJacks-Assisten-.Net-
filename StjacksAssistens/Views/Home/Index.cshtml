@@ -2,6 +2,8 @@
     ViewData["Title"] = "Panel de Control Pro";
 }
 <link rel="stylesheet" href="~/css/menuPrincipal.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
 <style>
     :root {
         --st-primary: #4361ee;
@@ -15,6 +17,7 @@
         min-height: 100vh;
         padding: 2rem 1rem;
     }
+
     .premium-card {
         background: #ffffff;
         border: none;
@@ -37,10 +40,17 @@
         border-radius: 1rem;
         font-size: 1.5rem;
     }
+
     .chart-wrapper {
         height: 350px;
         width: 100%;
     }
+
+    .mini-chart-wrapper {
+        height: 110px;
+        width: 100%;
+    }
+
     .alert-indicator {
         width: 10px;
         height: 10px;
@@ -48,6 +58,7 @@
         display: inline-block;
         margin-right: 8px;
     }
+
     .bg-grad-primary {
         background: linear-gradient(135deg, #4361ee, #4895ef);
     }
@@ -58,6 +69,10 @@
 
     .bg-grad-warning {
         background: linear-gradient(135deg, #ff9f1c, #ffbf69);
+    }
+
+    .bg-grad-danger {
+        background: linear-gradient(135deg, #e63946, #f1faee);
     }
 
     .quick-action-btn {
@@ -73,14 +88,36 @@
             background: var(--st-primary);
             color: white !important;
         }
+
+    .progress-sm {
+        height: 8px;
+    }
+
+    .distribution-badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 0.5rem;
+    }
+
+    /* Clases de apoyo añadidas para mantener la limpieza */
+    .kpi-subtext-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px dashed #f1f3f5;
+        font-size: 0.7rem;
+        color: #8a92a6;
+    }
 </style>
 
 <div class="dashboard-container">
     <div class="row mb-4 align-items-end">
         <div class="col-md-7">
-            <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-2">Sistema v2.0.1</span>
-            <h1 class="fw-bold display-6 mb-1">St. Jacks <span class="text-primary"> </span></h1>
-            <p class="text-muted">Análisis de rendimiento y control de personal en tiempo real.</p>
+            <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-2" style="background-color: rgba(67, 97, 238, 0.1);">Sistema de Gestión Operativa v2.1.0</span>
+            <h1 class="fw-bold display-6 mb-1">St. Jack's <span class="text-primary">Core</span></h1>
+            <p class="text-muted">Análisis de rendimiento, eficiencia de líneas de producción y control de personal en tiempo real.</p>
         </div>
         <div class="col-md-5 text-md-end">
             <div class="premium-card d-inline-flex align-items-center p-3 shadow-sm">
@@ -92,63 +129,68 @@
             </div>
         </div>
     </div>
+
     <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card premium-card p-4">
-                <div class="d-flex justify-content-between">
+        <div class="col-md-4">
+            <div class="card premium-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted small fw-bold">TOTAL OPERARIOS</h6>
-                        <h2 class="fw-bold mb-0">128</h2>
-                        <span class="text-success small fw-bold"><i class="bi bi-arrow-up"></i> 4% mes actual</span>
+                        <h6 class="text-muted small fw-bold mb-1">TOTAL OPERARIOS</h6>
+                        <h3 class="fw-bold mb-0">128</h3>
+                        <span class="text-success small fw-bold" style="font-size: 0.75rem;"><i class="bi bi-arrow-up"></i> 4% este mes</span>
                     </div>
-                    <div class="icon-shape bg-grad-primary text-white shadow-sm"><i class="bi bi-people"></i></div>
+                    <div class="icon-shape bg-grad-primary text-white shadow-sm" style="width:45px; height:45px; font-size:1.2rem;"><i class="bi bi-people"></i></div>
+                </div>
+                <div class="kpi-subtext-grid">
+                    <div>Contratados: 132</div>
+                    <div>Bajas m: 2</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card premium-card p-4">
-                <div class="d-flex justify-content-between">
+
+        <div class="col-md-4">
+            <div class="card premium-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted small fw-bold">AUSENTISMO</h6>
-                        <h2 class="fw-bold mb-0">94.2%</h2>
-                        <span class="text-primary small fw-bold">121/128 presentes</span>
+                        <h6 class="text-muted small fw-bold mb-1">PRESENCIA / AUSENTISMO</h6>
+                        <h3 class="fw-bold mb-0">94.5%</h3>
+                        <span class="text-primary small fw-bold" style="font-size: 0.75rem;">121/128 Activos</span>
                     </div>
-                    <div class="icon-shape bg-grad-success text-white shadow-sm"><i class="bi bi-calendar2-check"></i></div>
+                    <div class="icon-shape bg-grad-success text-white shadow-sm" style="width:45px; height:45px; font-size:1.2rem;"><i class="bi bi-calendar2-check"></i></div>
+                </div>
+                <div class="kpi-subtext-grid">
+                    <div>Retardos: 4</div>
+                    <div>Permisos: 3</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card premium-card p-4">
-                <div class="d-flex justify-content-between">
+
+        <div class="col-md-4">
+            <a asp-controller="Spreadsheet" asp-action="Index" class="card premium-card p-3 text-decoration-none shadow-sm h-100 bg-white">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted small fw-bold">INCAPACIDADES</h6>
-                        <h2 class="fw-bold mb-0">3</h2>
-                        <span class="text-danger small fw-bold">Pendientes de revisión</span>
+                        <h6 class="text-muted small fw-bold mb-1">GESTIÓN PAGOS</h6>
+                        <h3 class="fw-bold mb-0 text-dark">Planilla</h3>
+                        <span class="text-primary small fw-bold" style="font-size: 0.75rem;">Ir a cálculos <i class="bi bi-arrow-right"></i></span>
                     </div>
-                    <div class="icon-shape bg-grad-warning text-white shadow-sm"><i class="bi bi-bandaid"></i></div>
+                    <div class="icon-shape bg-light text-primary border" style="width:45px; height:45px; font-size:1.2rem;"><i class="bi bi-cash-stack"></i></div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <a asp-controller="Spreadsheet" asp-action="Index" class="card premium-card p-4 text-decoration-none shadow-sm h-100">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-muted small fw-bold">GESTIÓN DE PAGOS</h6>
-                        <h2 class="fw-bold mb-0 text-dark">Planilla</h2>
-                        <span class="text-primary small fw-bold">Ir a cálculos <i class="bi bi-arrow-right-short"></i></span>
-                    </div>
-                    <div class="icon-shape bg-light text-success border" style="background-color: #e8f5e9 !important; border-color: #c8e6c9 !important;">
-                        <i class="bi bi-cash-stack"></i>
-                    </div>
+                <div class="kpi-subtext-grid">
+                    <div>Cierre: 4 días</div>
+                    <div class="text-primary fw-bold">Periodo Activo</div>
                 </div>
             </a>
         </div>
     </div>
-    <div class="row g-4">
+
+    <div class="row g-4 mb-4">
         <div class="col-lg-8">
             <div class="card premium-card p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold m-0"><i class="bi bi-graph-up me-2"></i>Productividad Semanal</h5>
+                    <div>
+                        <h5 class="fw-bold m-0"><i class="bi bi-graph-up text-primary me-2"></i>Productividad y Asistencia</h5>
+                        <small class="text-muted">Comparativo de rendimiento de líneas vs asistencia</small>
+                    </div>
                     <div class="dropdown">
                         <button class="btn btn-sm btn-light border dropdown-toggle" data-bs-toggle="dropdown">Últimos 15 días</button>
                     </div>
@@ -161,42 +203,148 @@
 
         <div class="col-lg-4">
             <div class="card premium-card p-4 h-100">
-                <h5 class="fw-bold mb-4">Alertas Recientes</h5>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-target text-primary me-2"></i>Meta del Turno Actual</h5>
+                        <p class="text-muted small mb-0">Progreso de piezas terminadas en planta.</p>
+                    </div>
+                    <span class="badge bg-light text-dark border small py-1 px-2">Turno 1</span>
+                </div>
+
+                <div class="mb-3 pt-2">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="fw-bold">Línea de Costura A (Polos)</span>
+                        <span class="text-muted">1,420 / 1,800 pzas</span>
+                    </div>
+                    <div class="progress progress-sm rounded-pill mb-1">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 78%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center" style="font-size: 0.7rem;">
+                        <span class="text-muted"><i class="bi bi-arrow-right-short"></i> Operarios asignados: 22</span>
+                        <span class="badge bg-light text-primary fw-bold">78% Cumplido</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="fw-bold">Línea de Costura B (Chaquetas)</span>
+                        <span class="text-muted">950 / 1,000 pzas</span>
+                    </div>
+                    <div class="progress progress-sm rounded-pill mb-1">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 95%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center" style="font-size: 0.7rem;">
+                        <span class="text-muted"><i class="bi bi-arrow-right-short"></i> Operarios asignados: 18</span>
+                        <span class="badge bg-light text-success fw-bold">95% Cumplido</span>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="fw-bold">Área de Estampado / Serigrafía</span>
+                        <span class="text-muted">3,100 / 5,000 pzas</span>
+                    </div>
+                    <div class="progress progress-sm rounded-pill mb-1">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 62%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center" style="font-size: 0.7rem;">
+                        <span class="text-muted"><i class="bi bi-arrow-right-short"></i> Capacidad activa: 85%</span>
+                        <span class="badge bg-light text-warning fw-bold">62% Cumplido</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card premium-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-pie-chart text-primary me-2"></i>Distribución de Personal</h5>
+                        <p class="text-muted small mb-0">Ubicación del personal asignado hoy por módulos.</p>
+                    </div>
+                </div>
+                <div class="mini-chart-wrapper d-flex align-items-center justify-content-center mb-3">
+                    <canvas id="distributionPieChart"></canvas>
+                </div>
+                <div class="d-flex flex-wrap gap-2 justify-content-center mt-2">
+                    <span class="distribution-badge bg-light text-dark border"><i class="bi bi-circle-fill text-primary me-1"></i> Costura (65)</span>
+                    <span class="distribution-badge bg-light text-dark border"><i class="bi bi-circle-fill text-info me-1"></i> Corte (20)</span>
+                    <span class="distribution-badge bg-light text-dark border"><i class="bi bi-circle-fill text-warning me-1"></i> Empaque (25)</span>
+                    <span class="distribution-badge bg-light text-dark border"><i class="bi bi-circle-fill text-secondary me-1"></i> Calidad (11)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card premium-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0"><i class="bi bi-bell text-danger me-2"></i>Alertas Críticas</h5>
+                    <span class="badge bg-danger-soft text-danger rounded-pill" style="background-color: rgba(230, 57, 70, 0.1); font-size: 0.75rem;">2 Activas</span>
+                </div>
                 <div class="list-group list-group-flush">
                     <div class="list-group-item bg-transparent border-0 px-0 mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-shape bg-light-danger text-danger me-3" style="width:45px; height:45px; font-size:1rem;">
+                        <div class="d-flex align-items-top">
+                            <div class="icon-shape bg-light-danger text-danger me-3 flex-shrink-0" style="width:40px; height:40px; font-size:1rem; background-color: #ffebee !important;">
                                 <i class="bi bi-exclamation-triangle"></i>
                             </div>
                             <div>
                                 <h6 class="mb-0 fw-bold small">Ausencia Injustificada</h6>
-                                <p class="text-muted small mb-0">Operario: Juan Pérez (OP-442)</p>
+                                <p class="text-muted small mb-0">Operario: Juan Pérez (OP-442) - Módulo Costura B.</p>
+                                <small class="text-primary fw-bold" style="font-size:0.7rem;">Hace 15 min</small>
                             </div>
                         </div>
                     </div>
                     <div class="list-group-item bg-transparent border-0 px-0 mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-shape bg-light-info text-info me-3" style="width:45px; height:45px; font-size:1rem;">
-                                <i class="bi bi-info-circle"></i>
+                        <div class="d-flex align-items-top">
+                            <div class="icon-shape bg-light-warning text-warning me-3 flex-shrink-0" style="width:40px; height:40px; font-size:1rem; background-color: #fff8e1 !important;">
+                                <i class="bi bi-lightning"></i>
                             </div>
                             <div>
-                                <h6 class="mb-0 fw-bold small">Nuevo Periodo Creado</h6>
-                                <p class="text-muted small mb-0">Abril Q2 ha sido iniciado.</p>
+                                <h6 class="mb-0 fw-bold small">Baja de Eficiencia detectada</h6>
+                                <p class="text-muted small mb-0">Línea C cayó por debajo del 70% de rendimiento por paro técnico.</p>
+                                <small class="text-muted" style="font-size:0.7rem;">Hace 1 hora</small>
                             </div>
                         </div>
                     </div>
                 </div>
-                <hr>
-                <h6 class="fw-bold mb-3">Acciones Rápidas</h6>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card premium-card p-4 h-100">
+                <h6 class="fw-bold mb-1">Acciones de Control Directo</h6>
+                <p class="text-muted small mb-3">Accesos rápidos para la administración del piso de producción.</p>
                 <div class="row g-2">
                     <div class="col-6">
-                        <a asp-controller="Operators" asp-action="Index" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold">
-                            <i class="bi bi-table d-block fs-4 mb-1"></i> Asistencia
+                        <a asp-controller="Operators" asp-action="Index" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold shadow-sm p-2">
+                            <i class="bi bi-calendar-check text-primary d-block fs-4 mb-1"></i> Pasar Asistencia
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="#" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold">
-                            <i class="bi bi-file-earmark-pdf d-block fs-4 mb-1"></i> Reportes
+                        <a href="#" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold shadow-sm p-2">
+                            <i class="bi bi-plus-circle text-success d-block fs-4 mb-1"></i> Registrar Incap.
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold shadow-sm p-2">
+                            <i class="bi bi-file-earmark-bar-graph text-info d-block fs-4 mb-1"></i> Reporte Eficiencia
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold shadow-sm p-2">
+                            <i class="bi bi-gear text-secondary d-block fs-4 mb-1"></i> Configurar Metas
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold shadow-sm p-2">
+                            <i class="bi bi-shield-exclamation text-danger d-block fs-4 mb-1"></i> Reportar Paro
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="#" class="quick-action-btn d-block text-decoration-none text-dark small fw-bold shadow-sm p-2">
+                            <i class="bi bi-person-badge text-warning d-block fs-4 mb-1"></i> Asignar Líneas
                         </a>
                     </div>
                 </div>
@@ -204,6 +352,7 @@
         </div>
     </div>
 </div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -213,44 +362,86 @@
         }
         setInterval(updateClock, 1000);
         updateClock();
+
         const ctx = document.getElementById('mainDashboardChart').getContext('2d');
         const primaryColor = '#4361ee';
-        const secondaryColor = '#4cc9f0';
+        const successColor = '#2ec4b6';
+
         const fillGradient = ctx.createLinearGradient(0, 0, 0, 300);
-        fillGradient.addColorStop(0, 'rgba(67, 97, 238, 0.2)');
+        fillGradient.addColorStop(0, 'rgba(67, 97, 238, 0.15)');
         fillGradient.addColorStop(1, 'rgba(67, 97, 238, 0)');
+
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['01 Abr', '02 Abr', '03 Abr', '04 Abr', '05 Abr', '08 Abr', '09 Abr', '10 Abr'],
-                datasets: [{
-                    label: 'Tasa de Asistencia',
-                    data: [95, 93, 98, 92, 95, 96, 94, 97],
-                    borderColor: primaryColor,
-                    backgroundColor: fillGradient,
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 4,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: primaryColor,
-                    pointBorderWidth: 2
-                }]
+                datasets: [
+                    {
+                        label: 'Tasa de Asistencia (%)',
+                        data: [95, 93, 98, 92, 95, 96, 94, 97],
+                        borderColor: primaryColor,
+                        backgroundColor: fillGradient,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: primaryColor
+                    },
+                    {
+                        label: 'Eficiencia Operativa (%)',
+                        data: [84, 86, 89, 82, 85, 88, 87, 91],
+                        borderColor: successColor,
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: successColor
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: false,
-                        min: 85,
+                        min: 75,
                         grid: { borderDash: [5,5], color: '#e2e8f0' },
                         ticks: { callback: v => v + '%' }
                     },
                     x: { grid: { display: false } }
                 }
+            }
+        });
+
+        const ctxPie = document.getElementById('distributionPieChart').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['Costura', 'Corte', 'Empaque', 'Calidad'],
+                datasets: [{
+                    data: [65, 20, 25, 11],
+                    backgroundColor: ['#4361ee', '#4cc9f0', '#ff9f1c', '#7209b7'],
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                cutout: '70%'
             }
         });
     </script>

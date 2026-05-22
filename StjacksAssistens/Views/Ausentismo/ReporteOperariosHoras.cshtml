@@ -7,46 +7,31 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title>Reporte Descuentos Confección - @Model.Periodo.Description</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Reporte Confección - Descuento por Horas</title>
+    <link class="no-print" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/spreadssheet.css" />
-    <style>
-        .editable-motivo {
-            min-height: 25px;
-            cursor: text;
-        }
-
-            .editable-motivo:focus {
-                background-color: #f8f9fa;
-                outline: 1px solid #6f42c1;
-                border-radius: 4px;
-            }
-    </style>
 </head>
 <body class="p-4 bg-white">
 
     <div class="no-print p-3 mb-4 shadow-sm rounded border bg-light">
         <div class="row align-items-center">
             <div class="col-md-5 position-relative">
-                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Digite fecha o nombre del periodo:</label>
-                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Ej: 2026..." autocomplete="off">
+                <label class="fw-bold small text-muted"><i class="bi bi-search"></i> Buscar otro periodo:</label>
+                <input type="text" id="periodSearchInput" class="form-control form-control-sm" placeholder="Buscar..." autocomplete="off">
                 <div id="periodSearchResults" class="search-results-container" style="display: none;">
-                    @if (listaPeriodos != null)
+                    @foreach (var p in listaPeriodos)
                     {
-                        foreach (var p in listaPeriodos)
-                        {
-                            <div class="search-item" data-id="@p.Id" data-filter="@p.Description.ToLower() @p.StartDate.ToString("dd/MM/yyyy")">
-                                <strong>@p.Description</strong><br>
-                                <span class="text-muted small">Rango: @p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString()</span>
-                            </div>
-                        }
+                        <div class="search-item" data-id="@p.Id" data-filter="@p.Description.ToLower() @p.StartDate.ToString("dd/MM/yyyy")">
+                            <strong>@p.Description</strong><br>
+                            <span class="text-muted small">@p.StartDate.ToShortDateString() - @p.EndDate.ToShortDateString()</span>
+                        </div>
                     }
                 </div>
             </div>
             <div class="col-md-7 text-end">
                 <button onclick="window.print()" class="btn btn-dark btn-sm">
-                    <i class="bi bi-printer"></i> Imprimir Documento
+                    <i class="bi bi-printer"></i> Imprimir
                 </button>
                 <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-arrow-left"></i> Regresar
@@ -55,21 +40,21 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="fw-bold" style="font-size: 14px;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
-        <span class="fw-bold text-decoration-underline" style="font-size: 16px;">REPORTE DE DESCUENTOS POR HORA (FALTAS PARCIALES)</span>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold" style="font-size: 12px; font-family: Arial;">INDUSTRIAS ST. JACK'S S.A. DE C.V.</span>
+        <span class="fw-bold text-decoration-underline" style="font-size: 13px; font-family: Arial;">REPORTE DE DESCUENTOS POR HORA - CONFECCIÓN</span>
     </div>
 
     <table class="table-excel mb-3">
         <tr class="header-purple">
             <td style="width: 10%;">CDC</td>
-            <td style="width: 40%;">Nombre del Área, Depto. o Gerencia</td>
+            <td style="width: 40%;">Área / Departamento</td>
             <td style="width: 20%;">Tipo de Planilla</td>
             <td style="width: 30%;">Período de Pago</td>
         </tr>
         <tr>
             <td>@Model.CDC</td>
-            <td class="text-uppercase">@Model.AreaNombre</td>
+            <td>@Model.AreaNombre</td>
             <td>@Model.TipoPlanilla</td>
             <td class="fw-bold">Del @Model.Periodo.StartDate.ToString("dd/MM/yyyy") al @Model.Periodo.EndDate.ToString("dd/MM/yyyy")</td>
         </tr>
@@ -78,228 +63,151 @@
     <table class="table-excel">
         <thead>
             <tr class="header-purple">
-                <th rowspan="2" style="width: 30px;">No.</th>
-                <th rowspan="2" style="width: 60px;">Código</th>
-                <th rowspan="2">Nombre del Empleado</th>
-                <th colspan="5">Días con Falta Parcial</th>
-                <th rowspan="2" style="width: 110px;">Tiempo (H:M)</th>
-                <th rowspan="2" style="width: 90px;">Descuento</th>
-                <th rowspan="2" style="width: 250px;">Motivo de la Ausencia / Observaciones</th>
+                <th rowspan="2" style="width: 35px;">NO.</th>
+                <th rowspan="2" style="width: 65px;">CÓDIGO</th>
+                <th rowspan="2" style="width: 30%;">NOMBRE DEL EMPLEADO</th>
+                <th colspan="5">DÍAS DE LA SEMANA</th>
+                <th rowspan="2" style="width: 100px;">TIEMPO (H:M)</th>
+                <th rowspan="2" style="width: 90px;">DESCUENTO</th>
+                <th rowspan="2">MOTIVO / OBSERVACIONES</th>
             </tr>
             <tr class="header-purple">
-                <th style="width: 75px;">Lun</th>
-                <th style="width: 75px;">Mar</th>
-                <th style="width: 75px;">Mié</th>
-                <th style="width: 75px;">Jue</th>
-                <th style="width: 75px;">Vie</th>
+                <th style="width: 55px;">LUN</th>
+                <th style="width: 55px;">MAR</th>
+                <th style="width: 55px;">MIE</th>
+                <th style="width: 55px;">JUE</th>
+                <th style="width: 55px;">VIE</th>
             </tr>
         </thead>
         <tbody>
-            @if (!Model.Empleados.Any())
+            @{
+                int count = 1;
+            }
+            @foreach (var emp in Model.Empleados)
             {
+                var sem1 = emp.Semanas.ElementAtOrDefault(0);
+                var sem2 = emp.Semanas.ElementAtOrDefault(1);
+                var totalMinutos = (emp.HorasAusente * 60) + emp.MinutosAusente;
+                var montoDescuento = totalMinutos * 0.0275;
+
                 <tr>
-                    <td colspan="11" class="text-muted py-4 fw-semibold text-center bg-light">
-                        No se encontraron empleados en Confección con ausencias parciales ("PP") registradas en este período.
+                    <td rowspan="2">@count</td>
+                    <td rowspan="2" class="fw-bold">@emp.Codigo</td>
+                    <td rowspan="2" class="text-start ps-2">@emp.Nombre</td>
+                    <td>@(sem1?.Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem1?.Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td rowspan="2">
+                        <div class="time-input-group" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id">
+                            <input type="number" class="input-time in-h" value="@emp.HorasAusente" min="0" oninput="calcularDescuento(this)">
+                            <b>:</b>
+                            <input type="number" class="input-time in-m" value="@emp.MinutosAusente" min="0" max="59" oninput="calcularDescuento(this)">
+                        </div>
+                    </td>
+                    <td rowspan="2">
+                        <span class="label-descuento">$ @montoDescuento.ToString("F2")</span>
+                    </td>
+                    <td class="text-start p-1">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" data-semana="1" onblur="saveObservation(this)">
+                            @(sem1?.Motivo ?? "")
+                        </div>
                     </td>
                 </tr>
-            }
-            else
-            {
-                int count = 1;
-                foreach (var emp in Model.Empleados)
-                {
-                    @* FILA SUPERIOR: SEMANA 1 *@
-                    <tr>
-                        <td rowspan="2">@count</td>
-                        <td rowspan="2" class="fw-bold">@emp.Codigo</td>
-                        <td rowspan="2" class="text-start ps-2 text-uppercase">@emp.Nombre</td>
-
-                        <td class="@(emp.Semanas[0].Lunes != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[0].Lunes != null ? emp.Semanas[0].Lunes?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[0].Martes != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[0].Martes != null ? emp.Semanas[0].Martes?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[0].Miercoles != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[0].Miercoles != null ? emp.Semanas[0].Miercoles?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[0].Jueves != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[0].Jueves != null ? emp.Semanas[0].Jueves?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[0].Viernes != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[0].Viernes != null ? emp.Semanas[0].Viernes?.ToString("dd-MMM") : "")
-                        </td>
-
-                        <td rowspan="2" class="px-2">
-                            <div class="time-input-group d-flex align-items-center justify-content-center gap-1 bg-white p-1 rounded border border-secondary-subtle"
-                                 data-opid="@emp.Codigo"
-                                 data-period="@Model.Periodo.Id">
-                                <input type="number" class="form-control form-control-sm text-center fw-bold in-h"
-                                       style="width: 38px; height: 24px; padding: 0;"
-                                       value="@emp.HorasAusente" min="0" max="23" oninput="calcularDescuento(this, '@emp.Codigo')">
-                                <span class="fw-bold text-muted">:</span>
-                                <input type="number" class="form-control form-control-sm text-center fw-bold in-m"
-                                       style="width: 38px; height: 24px; padding: 0;"
-                                       value="@emp.MinutosAusente" min="0" max="59" oninput="calcularDescuento(this, '@emp.Codigo')">
-                            </div>
-                        </td>
-
-                        <td rowspan="2" class="fw-bold text-danger label-descuento bg-light-subtle text-end pe-2">
-                            $ @(((emp.HorasAusente * 60 + emp.MinutosAusente) * 0.0275).ToString("N2"))
-                        </td>
-
-                        <td class="text-start small italic p-1">
-                            <div class="editable-motivo" contenteditable="true"
-                                 data-opid="@emp.Codigo"
-                                 data-period="@Model.Periodo.Id"
-                                 data-semana="1"
-                                 onblur="saveObservation(this)">
-                                @emp.Semanas[0].Motivo
-                            </div>
-                        </td>
-                    </tr>
-
-                    @* FILA INFERIOR: SEMANA 2 *@
-                    <tr>
-                        <td class="@(emp.Semanas[1].Lunes != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[1].Lunes != null ? emp.Semanas[1].Lunes?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[1].Martes != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[1].Martes != null ? emp.Semanas[1].Martes?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[1].Miercoles != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[1].Miercoles != null ? emp.Semanas[1].Miercoles?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[1].Jueves != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[1].Jueves != null ? emp.Semanas[1].Jueves?.ToString("dd-MMM") : "")
-                        </td>
-                        <td class="@(emp.Semanas[1].Viernes != null ? "bg-warning-subtle fw-bold" : "")">
-                            @(emp.Semanas[1].Viernes != null ? emp.Semanas[1].Viernes?.ToString("dd-MMM") : "")
-                        </td>
-
-                        <td class="text-start small italic p-1">
-                            <div class="editable-motivo" contenteditable="true"
-                                 data-opid="@emp.Codigo"
-                                 data-period="@Model.Periodo.Id"
-                                 data-semana="2"
-                                 onblur="saveObservation(this)">
-                                @emp.Semanas[1].Motivo
-                            </div>
-                        </td>
-                    </tr>
-                    count++;
-                }
+                <tr>
+                    <td>@(sem2?.Lunes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Martes?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Miercoles?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Jueves?.ToString("dd-MMM") ?? "")</td>
+                    <td>@(sem2?.Viernes?.ToString("dd-MMM") ?? "")</td>
+                    <td class="text-start p-1">
+                        <div class="editable-motivo" contenteditable="true" data-opid="@emp.Codigo" data-period="@Model.Periodo.Id" data-semana="2" onblur="saveObservation(this)">
+                            @(sem2?.Motivo ?? "")
+                        </div>
+                    </td>
+                </tr>
+                count++;
             }
         </tbody>
     </table>
 
-    <div class="container-fluid text-center mt-5">
-        <div class="row text-uppercase fw-semibold" style="font-size: 11px;">
+    <div class="container-fluid text-center mt-5" style="page-break-inside: avoid; font-family: Arial;">
+        <div class="row">
             <div class="col-4">
-                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;" class="mb-1"></div>
-                <div>Elaborado por: Willian Alexander</div>
-                <div class="text-muted" style="font-size: 10px;">Digitador</div>
+                <div style="border-top: 1px solid black; width: 85%; margin: 0 auto; margin-bottom: 4px;"></div>
+                <div class="fw-bold" style="font-size: 11px;">Elaborado por: Willian Alexander</div>
+                <div style="font-size: 11px; color: #333;">Digitador</div>
             </div>
             <div class="col-4">
-                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;" class="mb-1"></div>
-                <div>Revisado por: Ing. Luis Alonso Barahona</div>
-                <div class="text-muted" style="font-size: 10px;">Jefe de Confección y Empaque</div>
+                <div style="border-top: 1px solid black; width: 85%; margin: 0 auto; margin-bottom: 4px;"></div>
+                <div class="fw-bold" style="font-size: 11px;">Revisado por: Ing. Luis Alonso Barahona</div>
+                <div style="font-size: 11px; color: #333;">Jefe de Confección y Empaque</div>
             </div>
             <div class="col-4">
-                <div style="border-top: 1px solid black; width: 80%; margin: 0 auto;" class="mb-1"></div>
-                <div>Autorizado por: Ing. Johanna Quiñónez</div>
-                <div class="text-muted" style="font-size: 10px;">Directora de Producción</div>
+                <div style="border-top: 1px solid black; width: 85%; margin: 0 auto; margin-bottom: 4px;"></div>
+                <div class="fw-bold" style="font-size: 11px;">Autorizado por: Ing. Johanna Quiñónez</div>
+                <div style="font-size: 11px; color: #333;">Directora de Producción</div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- BUSCADOR FILTRABLE DE PERIODOS ---
-        const input = document.getElementById('periodSearchInput');
-        const container = document.getElementById('periodSearchResults');
-        const allItems = document.querySelectorAll('.search-item');
-
-        input.addEventListener('input', function() {
-            const searchText = this.value.toLowerCase().trim();
-            if (searchText.length === 0) { container.style.display = 'none'; return; }
-            let foundCount = 0;
-            allItems.forEach(item => {
-                if (item.getAttribute('data-filter').includes(searchText)) {
-                    item.style.display = 'block'; foundCount++;
-                } else { item.style.display = 'none'; }
-            });
-            container.style.display = foundCount > 0 ? 'block' : 'none';
-        });
-
-        allItems.forEach(item => {
-            item.addEventListener('click', function() {
-                // Redirige al controlador de Confección pasando el ID seleccionado
-                window.location.href = '/Ausentismo/ReporteOperariosHoras?periodId=' + this.getAttribute('data-id');
-            });
-        });
-
-        // --- CÁLCULO DINÁMICO DE DESCUENTOS POR HORA ---
-        function calcularDescuento(el, operarioCodigo) {
+        function calcularDescuento(el) {
             const group = el.closest('.time-input-group');
-            const parentRow = group.closest('tr');
-            const labelDescuento = parentRow.querySelector('.label-descuento');
-
-            let h = parseInt(group.querySelector('.in-h').value) || 0;
-            let m = parseInt(group.querySelector('.in-m').value) || 0;
-
-            if (m >= 60) {
-                h += Math.floor(m / 60);
-                m = m % 60;
-                group.querySelector('.in-h').value = h;
-                group.querySelector('.in-m').value = m;
-            }
-
+            const row = el.closest('tr');
+            const h = parseInt(group.querySelector('.in-h').value) || 0;
+            const m = parseInt(group.querySelector('.in-m').value) || 0;
             const totalMinutos = (h * 60) + m;
             const monto = totalMinutos * 0.0275;
 
-            if(labelDescuento) {
-                labelDescuento.innerText = "$ " + monto.toFixed(2);
-            }
+            row.querySelector('.label-descuento').innerText = "$ " + monto.toFixed(2);
 
-            const payload = {
-                OperatorCode: operarioCodigo,
-                PeriodId: parseInt(group.getAttribute('data-period')),
-                Hours: h,
-                Minutes: m
-            };
-
-            fetch('/Ausentismo/GuardarHorasConfeccion', {
+            fetch('/Ausentismo/GuardarHorasEmpaque', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if (!res.ok) console.error("Error al guardar horas en el servidor.");
-            })
-            .catch(err => console.error("Error de red en horas:", err));
+                body: JSON.stringify({
+                    OperatorCode: group.getAttribute('data-opid'),
+                    PeriodId: parseInt(group.getAttribute('data-period')),
+                    Hours: h,
+                    Minutes: m
+                })
+            });
         }
 
-        // --- GUARDADO AUTOMÁTICO DE OBSERVACIONES ---
         function saveObservation(element) {
             const text = element.innerText.trim();
-
-            const payload = {
-                OperatorCode: element.getAttribute('data-opid'),
-                PeriodId: parseInt(element.getAttribute('data-period')),
-                Observation: text,
-                SemanaNumero: parseInt(element.getAttribute('data-semana'))
-            };
-
+            element.classList.add('saving');
             fetch('/Ausentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (!response.ok) console.error("Error en el servidor al guardar la observación.");
-            })
-            .catch(error => console.error("Error de red en observación:", error));
+                body: JSON.stringify({
+                    OperatorCode: element.getAttribute('data-opid'),
+                    PeriodId: parseInt(element.getAttribute('data-period')),
+                    Observation: text,
+                    Semana: parseInt(element.getAttribute('data-semana') || "1")
+                })
+            }).then(() => element.classList.remove('saving'));
         }
+
+        const input = document.getElementById('periodSearchInput');
+        const container = document.getElementById('periodSearchResults');
+        input.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            if (searchText.length === 0) { container.style.display = 'none'; return; }
+            document.querySelectorAll('.search-item').forEach(item => {
+                if (item.getAttribute('data-filter').includes(searchText)) {
+                    item.style.display = 'block';
+                } else item.style.display = 'none';
+            });
+            container.style.display = 'block';
+        });
+
+        document.querySelectorAll('.search-item').forEach(item => {
+            item.addEventListener('click', function() {
+                window.location.href = '/Ausentismo/ReporteConfeccionHoras?periodId=' + this.getAttribute('data-id');
+            });
+        });
     </script>
 </body>
 </html>

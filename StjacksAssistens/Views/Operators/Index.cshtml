@@ -1,4 +1,5 @@
 ﻿@model StjacksAssistens.Models.AttendanceViewModel
+
 @{
     ViewData["Title"] = "Asistencia";
     var totalOperarios = Model.Rows.Count;
@@ -146,7 +147,7 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card shadow-sm" onclick="showStatusDetails('PP', 'Permisos Hoy', 'bg-warning')" style="cursor:pointer">
+        <div class="stat-card shadow-sm" onclick="showStatusDetails('PP', 'Detalle de Permisos (PP)', 'bg-warning')" style="cursor:pointer">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-warning text-white"><i class="bi bi-envelope-paper"></i></div>
                 <div><small class="text-muted d-block">Permisos (PP)</small><span class="fw-bold h5">@totalPP</span></div>
@@ -154,7 +155,7 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card shadow-sm" onclick="showStatusDetails('ISS', 'Personal en ISSS', 'bg-info')" style="cursor:pointer">
+        <div class="stat-card shadow-sm" onclick="showStatusDetails('ISS', 'Detalle de Personal en ISSS', 'bg-info')" style="cursor:pointer">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-info text-white"><i class="bi bi-hospital"></i></div>
                 <div><small class="text-muted d-block">ISSS</small><span class="fw-bold h5">@totalISS</span></div>
@@ -162,7 +163,7 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card shadow-sm" onclick="showStatusDetails('INC', 'Incapacitados', 'bg-danger')" style="cursor:pointer">
+        <div class="stat-card shadow-sm" onclick="showStatusDetails('INC', 'Detalle de Incapacitados (INC)', 'bg-danger')" style="cursor:pointer">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-danger text-white"><i class="bi bi-exclamation-triangle"></i></div>
                 <div><small class="text-muted d-block">Incap. (INC)</small><span class="fw-bold h5">@totalINC</span></div>
@@ -354,6 +355,10 @@
 
 @section Scripts {
     <script>
+
+        // Inyectamos de forma segura todo el modelo de C# a JavaScript para no depender de lo que hay visible en la tabla HTML
+        window.attendanceData = @Json.Serialize(Model.Rows);
+
         let selectedPeriodId = null, selectedPeriodName = "";
 
         // Context Menu Logic
@@ -401,6 +406,16 @@
                 if(next === "X") cell.style.color = "#cbd5e0";
                 else if(next === "PP") cell.style.color = "#f59e0b";
                 else cell.style.color = "#ef4444";
+
+                // Actualizar la memoria local para que el modal refleje el cambio de inmediato sin recargar
+                if(window.attendanceData) {
+                    const op = window.attendanceData.find(o => o.operatorsId == cell.dataset.opid);
+                    if(op && op.dailyStatus) {
+                        // Buscamos la fecha ignorando la hora
+                        const targetKey = Object.keys(op.dailyStatus).find(k => k.startsWith(cell.dataset.date));
+                        if(targetKey) op.dailyStatus[targetKey] = next;
+                    }
+                }
             });
         }
 
@@ -429,7 +444,7 @@
             }
         }
 
-        // NUEVA FUNCIÓN PARA MOSTRAR DETALLES DE LAS TARJETAS
+        // FUNCIÓN GLOBAL CORREGIDA: Busca en el listado maestro de la memoria
         function showStatusDetails(statusCode, title, headerClass) {
             const listContainer = document.getElementById('statusDetailsList');
             const emptyMsg = document.getElementById('emptyStatusMsg');
@@ -439,38 +454,65 @@
             document.getElementById('statusModalTitle').innerText = title;
             modalHeader.className = 'modal-header text-white ' + headerClass;
 
-            // Fecha de hoy para comparar con data-date
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const todayStr = `${year}-${month}-${day}`;
-
             let foundCount = 0;
 
-            document.querySelectorAll('tbody tr').forEach(tr => {
-                const cell = tr.querySelector(`.attendance-cell[data-date="${todayStr}"]`);
+            if (!window.attendanceData || window.attendanceData.length === 0) {
+                emptyMsg.classList.remove('d-none');
+                listContainer.classList.add('d-none');
+                new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
+                return;
+            }
 
-                if (cell && cell.innerText.trim() === statusCode) {
-                    const opName = tr.querySelector('.fw-semibold').innerText;
-                    const opArea = tr.querySelector('.text-muted.small').innerText;
-                    const opCode = tr.querySelector('.text-secondary').innerText;
+            // Recorrer el universo completo de operarios del periodo (sin importar filtros HTML)
+            window.attendanceData.forEach(row => {
+                let userDates = [];
+
+                if (row.dailyStatus) {
+                    Object.keys(row.dailyStatus).forEach(dateKey => {
+                        if (row.dailyStatus[dateKey] === statusCode) {
+                            // Extraer año, mes, día de la clave del diccionario (ej: "2026-05-21T00:00:00")
+                            const rawDate = dateKey.split('T')[0];
+                            const parts = rawDate.split('-');
+
+                            if(parts.length === 3) {
+                                const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                                const formattedDate = dateObj.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: 'short'
+                                });
+                                userDates.push(formattedDate);
+                            }
+                        }
+                    });
+                }
+
+                // Si acumuló días, se agrega al listado general del modal
+                if (userDates.length > 0) {
+                    // Ordenar las fechas cronológicamente para que se vea limpio
+                    userDates.sort((a, b) => a.localeCompare(b));
+                    const daysText = userDates.join(', ');
 
                     const item = `
                         <div class="list-group-item p-3 border-bottom">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0 fw-bold text-dark">${opName}</h6>
-                                    <small class="text-muted">${opCode} | ${opArea}</small>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div style="max-width: 75%;">
+                                    <h6 class="mb-1 fw-bold text-dark">${row.name}</h6>
+                                    <p class="mb-1 small text-secondary"><strong>Días:</strong> ${daysText}</p>
+                                    <small class="text-muted d-block" style="font-size:0.75rem;">${row.code} | ${row.categoryName || 'Sin Área'}</small>
                                 </div>
-                                <span class="badge rounded-pill ${headerClass}">${statusCode}</span>
+                                <div class="text-end">
+                                    <span class="badge rounded-pill ${headerClass} d-block mb-1">${statusCode}</span>
+                                    <span class="badge bg-light text-dark border fw-bold d-block">Total: ${userDates.length} d</span>
+                                </div>
                             </div>
                         </div>`;
+
                     listContainer.innerHTML += item;
                     foundCount++;
                 }
             });
 
+            // Control visual del mensaje de lista vacía
             if (foundCount === 0) {
                 emptyMsg.classList.remove('d-none');
                 listContainer.classList.add('d-none');
