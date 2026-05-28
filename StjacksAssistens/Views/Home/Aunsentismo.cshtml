@@ -1,0 +1,319 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using System.Linq
+@inject StjacksAssistens.Data.ApplicationDbContext _context
+@{
+    ViewData["Title"] = "Consolidado de Ausentismo - Estilo Dinámico Excel";
+    var ultimoPeriodo = await _context.Periodss
+        .OrderByDescending(p => p.Id)
+        .FirstOrDefaultAsync();
+    var periodoId = ultimoPeriodo?.Id ?? 0;
+    var registrosAusentismo = new[] {
+        new { Fecha = new DateTime(2026, 1, 2), Linea = "Línea 21", Incapacidad = 0.0, Permiso = 8.5, Clinica = 0.0, ISSS = 0.0, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 1, 2), Linea = "Línea 23", Incapacidad = 0.0, Permiso = 0.0, Clinica = 0.0, ISSS = 0.0, ModaParcial = 0.00 },
+        new { Fecha = new DateTime(2026, 1, 2), Linea = "Línea 25", Incapacidad = 0.0, Permiso = 8.5, Clinica = 0.0, ISSS = 0.0, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 1, 2), Linea = "Línea 26", Incapacidad = 8.5, Permiso = 0.0, Clinica = 0.0, ISSS = 0.0, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 1, 2), Linea = "Línea 32", Incapacidad = 0.0, Permiso = 0.0, Clinica = 0.0, ISSS = 8.5, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 1, 5), Linea = "Línea 23", Incapacidad = 0.0, Permiso = 0.0, Clinica = 0.0, ISSS = 4.0, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 1, 5), Linea = "Línea 26", Incapacidad = 0.0, Permiso = 17.0, Clinica = 0.0, ISSS = 0.0, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 1, 7), Linea = "Línea 21", Incapacidad = 4.0, Permiso = 4.0, Clinica = 0.0, ISSS = 0.0, ModaParcial = 2.00 },
+        new { Fecha = new DateTime(2026, 1, 15), Linea = "Línea 25", Incapacidad = 0.0, Permiso = 8.5, Clinica = 4.0, ISSS = 0.0, ModaParcial = 1.50 },
+        new { Fecha = new DateTime(2026, 2, 3),  Linea = "Línea 21", Incapacidad = 8.5, Permiso = 0.0, Clinica = 0.0, ISSS = 0.0, ModaParcial = 1.00 },
+        new { Fecha = new DateTime(2026, 2, 12), Linea = "Línea 26", Incapacidad = 0.0, Permiso = 0.0, Clinica = 8.5, ISSS = 4.0, ModaParcial = 2.00 }
+    };
+    int ObtenerSemanaDelAno(DateTime fecha)
+    {
+        System.Globalization.CultureInfo ci = System.Globalization.CultureInfo.CurrentCulture;
+        return ci.Calendar.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+    }
+    var modasDiarias = registrosAusentismo
+        .GroupBy(r => r.Fecha)
+        .Select(g => new
+        {
+            Fecha = g.Key,
+            ModaParcial = g.Sum(x => x.ModaParcial),
+            ModaTotal = g.Sum(x => (x.Incapacidad + x.Permiso + x.Clinica + x.ISSS)) / 8.5
+        })
+        .OrderBy(o => o.Fecha)
+        .ToList();
+}
+<link rel="stylesheet" href="~/css/menuPrincipal.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/button-icons.css">
+<style>
+    :root {
+        --excel-blue: #5c7694;
+        --excel-light-blue: #f2f5f9;
+        --excel-accent: #2c3e50;
+        --excel-border: #d0d7de;
+        --excel-alert-yellow: #fff3cd;
+        --excel-green-kpi: #107c41;
+        --excel-month-header: #4a5d6e;
+        --excel-week-header: #788ba2;
+    }
+    body {
+        background-color: #f4f6f9;
+    }
+    .excel-container {
+        padding: 1.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .excel-sheet-tab {
+        background: white;
+        border: 1px solid var(--excel-border);
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--excel-accent);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .table-excel {
+        border: 1px solid var(--excel-border);
+        background-color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+        .table-excel thead th {
+            background-color: var(--excel-blue) !important;
+            color: white !important;
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            border: 1px solid #7a94b2 !important;
+            padding: 10px;
+            vertical-align: middle;
+        }
+        .table-excel tbody td {
+            font-size: 0.82rem;
+            color: #333;
+            border: 1px solid #e1e4e8 !important;
+            padding: 8px;
+            vertical-align: middle;
+        }
+    .row-month-title {
+        background-color: var(--excel-month-header) !important;
+        color: white !important;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    .row-week-title {
+        background-color: var(--excel-week-header) !important;
+        color: white !important;
+        font-weight: 600;
+        font-size: 0.82rem;
+    }
+    .row-excel-subtotal {
+        background-color: #f1f3f5 !important;
+        font-weight: bold;
+        border-bottom: 1.5px dashed #adb5bd !important;
+    }
+    .row-excel-total-general {
+        background-color: #d1ecf1 !important;
+        font-weight: bold;
+        border-top: 2px solid var(--excel-accent) !important;
+    }
+    .sticky-panel {
+        position: sticky;
+        top: 20px;
+    }
+    .scrollable-excel-table {
+        max-height: 520px;
+        overflow-y: auto;
+        border-radius: 0 0 8px 8px;
+        border: 1px solid var(--excel-border);
+    }
+</style>
+<div class="excel-container">
+    <div class="row align-items-center mb-3">
+        <div class="col-md-7">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-white border shadow-sm rounded px-3 mb-2 text-secondary bg-white">
+                <i class="bi bi-arrow-left-short fs-5 align-middle"></i> Regresar al Dashboard Principal
+            </a>
+            <h2 class="fw-bold text-dark m-0">Sábana Consolidada: <span style="color: var(--excel-blue);">Acumulado Mensual y Semanal</span></h2>
+            <p class="text-muted small mb-0">Matriz estructurada con inteligencia de agrupamiento automático por periodos de tiempo calendario.</p>
+        </div>
+        <div class="col-md-5 text-md-end mt-2 mt-md-0">
+            <div class="d-inline-flex gap-2">
+                <span class="btn btn-sm btn-light border bg-white text-dark fw-bold" style="cursor: default;">
+                    <i class="bi bi-calendar-range text-success me-1"></i> ID Periodo: @periodoId
+                </span>
+                <button onclick="window.print();" class="btn btn-sm btn-dark shadow-sm px-3"><i class="bi bi-printer me-1"></i> Imprimir Reporte</button>
+            </div>
+        </div>
+    </div>
+    <hr class="text-muted opacity-25 mb-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="excel-sheet-tab shadow-sm">
+                <i class="bi bi-calculator text-primary"></i> <strong>GETPIVOTDATA_Mensual_Año_Actual</strong>
+            </div>
+            <div class="card p-3 border-top-0 rounded-0 rounded-bottom shadow-sm bg-white">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-excel text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; background-color: #4a5d6e !important;">Métricas Acumuladas</th>
+                                @foreach (var grupoMes in registrosAusentismo.GroupBy(r => r.Fecha.ToString("MMMM")).OrderBy(g => g.First().Fecha.Month))
+                                {
+                                    <th class="text-capitalize">@grupoMes.Key</th>
+                                }
+                                <th style="background-color: var(--excel-green-kpi) !important;">Total General Acumulado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start fw-bold bg-light">Horas Totales Reportadas</td>
+                                @foreach (var grupoMes in registrosAusentismo.GroupBy(r => r.Fecha.ToString("MMMM")).OrderBy(g => g.First().Fecha.Month))
+                                {
+                                    var totalHorasMes = grupoMes.Sum(x => x.Incapacidad + x.Permiso + x.Clinica + x.ISSS);
+                                    <td>@totalHorasMes.ToString("N1") hrs</td>
+                                }
+                                <td class="fw-bold text-dark">@registrosAusentismo.Sum(x => x.Incapacidad + x.Permiso + x.Clinica + x.ISSS).ToString("N1") hrs</td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold bg-light text-primary">Equivalente Minutos Perdidos</td>
+                                @foreach (var grupoMes in registrosAusentismo.GroupBy(r => r.Fecha.ToString("MMMM")).OrderBy(g => g.First().Fecha.Month))
+                                {
+                                    var totalMinutosMes = grupoMes.Sum(x => (x.Incapacidad + x.Permiso + x.Clinica + x.ISSS) * 60);
+                                    <td class="text-primary fw-bold">@totalMinutosMes.ToString("N0") min</td>
+                                }
+                                <td class="bg-dark text-white fw-bold">@((registrosAusentismo.Sum(x => x.Incapacidad + x.Permiso + x.Clinica + x.ISSS) * 60).ToString("N0")) min</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="excel-sheet-tab shadow-sm">
+                <i class="bi bi-layers text-secondary"></i> <strong>Pivot_Abscisas_Tiempos</strong>
+            </div>
+            <div class="card p-3 border-top-0 rounded-0 rounded-bottom shadow-sm bg-white">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-excel text-center align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">Mes / Semana</th>
+                                <th style="width: 13%;">Fecha Reg.</th>
+                                <th style="width: 12%;">Línea</th>
+                                <th style="width: 11%;">Incapacidad</th>
+                                <th style="width: 11%;">Permiso</th>
+                                <th style="width: 11%;">Clínica</th>
+                                <th style="width: 11%;">ISSS</th>
+                                <th style="width: 16%; background-color: #2c3e50 !important;">Minutos Calculados</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var grupoMes in registrosAusentismo.GroupBy(r => r.Fecha.ToString("MMMM")).OrderBy(g => g.First().Fecha.Month))
+                            {
+                                <tr class="row-month-title">
+                                    <td colspan="8" class="text-start ps-3 text-uppercase">
+                                        <i class="bi bi-calendar-month me-2"></i> MES: @grupoMes.Key
+                                    </td>
+                                </tr>
+                                @foreach (var grupoSemana in grupoMes.GroupBy(r => ObtenerSemanaDelAno(r.Fecha)).OrderBy(g => g.Key))
+                                {
+                                    <tr class="row-week-title">
+                                        <td colspan="8" class="text-start ps-4 text-white-50">
+                                            <i class="bi bi-calendar-week me-2"></i> Semana Calendario Excel: #@grupoSemana.Key
+                                        </td>
+                                    </tr>
+                                    @foreach (var item in grupoSemana.OrderBy(x => x.Fecha))
+                                    {
+                                        var minutosFila = (item.Incapacidad + item.Permiso + item.Clinica + item.ISSS) * 60;
+                                        <tr>
+                                            <td></td>
+                                            <td class="bg-light fw-bold">@item.Fecha.ToString("dd-MMM-yy")</td>
+                                            <td class="text-primary fw-bold">@item.Linea</td>
+                                            <td>@(item.Incapacidad > 0 ? item.Incapacidad.ToString("N1") : "0")</td>
+                                            <td>@(item.Permiso > 0 ? item.Permiso.ToString("N1") : "0")</td>
+                                            <td>@(item.Clinica > 0 ? item.Clinica.ToString("N1") : "0")</td>
+                                            <td>@(item.ISSS > 0 ? item.ISSS.ToString("N1") : "0")</td>
+                                            <td class="bg-light-blue fw-bold text-end pe-3">@minutosFila.ToString("N0") min</td>
+                                        </tr>
+                                    }
+                                    var subIncSem = grupoSemana.Sum(x => x.Incapacidad);
+                                    var subPerSem = grupoSemana.Sum(x => x.Permiso);
+                                    var subCliSem = grupoSemana.Sum(x => x.Clinica);
+                                    var subIssSem = grupoSemana.Sum(x => x.ISSS);
+                                    var subMinSem = (subIncSem + subPerSem + subCliSem + subIssSem) * 60;
+
+                                    <tr class="row-excel-subtotal">
+                                        <td colspan="3" class="text-end text-muted pe-3">Subtotal Sem #@grupoSemana.Key:</td>
+                                        <td>@subIncSem.ToString("N1")</td>
+                                        <td>@subPerSem.ToString("N1")</td>
+                                        <td>@subCliSem.ToString("N1")</td>
+                                        <td>@subIssSem.ToString("N1")</td>
+                                        <td class="text-end pe-3 text-secondary">@subMinSem.ToString("N0") min</td>
+                                    </tr>
+                                }
+                                var totIncMes = grupoMes.Sum(x => x.Incapacidad);
+                                var totPerMes = grupoMes.Sum(x => x.Permiso);
+                                var totCliMes = grupoMes.Sum(x => x.Clinica);
+                                var totIssMes = grupoMes.Sum(x => x.ISSS);
+                                var totMinMes = (totIncMes + totPerMes + totCliMes + totIssMes) * 60;
+                                <tr style="background-color: #e2e8f0; font-weight: bold; border-bottom: 2px solid var(--excel-blue);">
+                                    <td colspan="3" class="text-start ps-3 text-primary text-uppercase">Total Acumulado @grupoMes.Key:</td>
+                                    <td class="text-primary">@totIncMes.ToString("N1")</td>
+                                    <td class="text-primary">@totPerMes.ToString("N1")</td>
+                                    <td class="text-primary">@totCliMes.ToString("N1")</td>
+                                    <td class="text-primary">@totIssMes.ToString("N1")</td>
+                                    <td class="text-primary text-end pe-3 bg-white">@totMinMes.ToString("N0") min</td>
+                                </tr>
+                            }
+                            <tr class="row-excel-total-general">
+                                <td colspan="3" class="text-uppercase text-start ps-3"><i class="bi bi-sigma me-2"></i>TOTAL GENERAL DE PLANTA</td>
+                                <td>@registrosAusentismo.Sum(x => x.Incapacidad).ToString("N1") hrs</td>
+                                <td>@registrosAusentismo.Sum(x => x.Permiso).ToString("N1") hrs</td>
+                                <td>@registrosAusentismo.Sum(x => x.Clinica).ToString("N1") hrs</td>
+                                <td>@registrosAusentismo.Sum(x => x.ISSS).ToString("N1") hrs</td>
+                                <td class="bg-dark text-white text-end pe-3">@((registrosAusentismo.Sum(x => x.Incapacidad + x.Permiso + x.Clinica + x.ISSS) * 60).ToString("N0")) min</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 sticky-panel">
+            <div class="excel-sheet-tab shadow-sm">
+                <i class="bi bi-calendar3 text-success"></i> <strong>Moda_Diaria_Consol</strong>
+            </div>
+            <div class="card p-0 border-top-0 rounded-0 rounded-bottom shadow-sm bg-white">
+                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark small">Consolidado Diario de Modas</span>
+                    <i class="bi bi-funnel-fill text-muted small"></i>
+                </div>
+                <div class="scrollable-excel-table">
+                    <table class="table table-sm table-hover text-center align-middle mb-0">
+                        <thead class="bg-white position-sticky top-0 shadow-sm" style="z-index: 10;">
+                            <tr>
+                                <th class="py-2 border-bottom text-start ps-3" style="color: var(--excel-blue); font-size: 0.75rem;">Fecha Jornada</th>
+                                <th class="py-2 border-bottom" style="color: var(--excel-blue); font-size: 0.75rem;">Moda Parcial</th>
+                                <th class="py-2 border-bottom" style="color: var(--excel-blue); font-size: 0.75rem;">Moda Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in modasDiarias)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-start ps-3">@m.Fecha.ToString("dd-MMM")</td>
+                                    <td><span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">@m.ModaParcial.ToString("N2")</span></td>
+                                    <td class="text-primary fw-bold">@m.ModaTotal.ToString("N2")</td>
+                                </tr>
+                            }
+                            <tr class="row-excel-subtotal text-dark">
+                                <td class="text-start ps-3 font-weight-bold">Promedio Periodo</td>
+                                <td class="font-weight-bold">@modasDiarias.Average(x => x.ModaParcial).ToString("N1")</td>
+                                <td class="text-success font-weight-bold">@modasDiarias.Average(x => x.ModaTotal).ToString("N2")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

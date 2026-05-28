@@ -13,6 +13,11 @@ namespace StjacksAssistens.Controllers
             _logger = logger;
         }
 
+        public IActionResult Aunsentismo()
+        {
+            return View();
+        }
+
         public IActionResult Index()
         {
             return View();

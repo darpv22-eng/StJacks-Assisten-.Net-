@@ -355,13 +355,8 @@
 
 @section Scripts {
     <script>
-
-        // Inyectamos de forma segura todo el modelo de C# a JavaScript para no depender de lo que hay visible en la tabla HTML
         window.attendanceData = @Json.Serialize(Model.Rows);
-
         let selectedPeriodId = null, selectedPeriodName = "";
-
-        // Context Menu Logic
         document.addEventListener('contextmenu', e => {
             const tab = e.target.closest('.period-tab');
             if (tab) {
@@ -389,8 +384,6 @@
             if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"? Se borrarán todas las asistencias de este periodo.`))
                 window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
         }
-
-        // Attendance Toggle Logic
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC"];
             let current = cell.innerText.trim();
@@ -406,28 +399,21 @@
                 if(next === "X") cell.style.color = "#cbd5e0";
                 else if(next === "PP") cell.style.color = "#f59e0b";
                 else cell.style.color = "#ef4444";
-
-                // Actualizar la memoria local para que el modal refleje el cambio de inmediato sin recargar
                 if(window.attendanceData) {
                     const op = window.attendanceData.find(o => o.operatorsId == cell.dataset.opid);
                     if(op && op.dailyStatus) {
-                        // Buscamos la fecha ignorando la hora
                         const targetKey = Object.keys(op.dailyStatus).find(k => k.startsWith(cell.dataset.date));
                         if(targetKey) op.dailyStatus[targetKey] = next;
                     }
                 }
             });
         }
-
-        // Search Logic
         document.getElementById('tableSearch').addEventListener('keyup', function() {
             let val = this.value.toLowerCase();
             document.querySelectorAll('tbody tr').forEach(tr => {
                 tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
             });
         });
-
-        // Dropdown Menu Logic
         document.addEventListener('click', e => {
             const btn = e.target.closest('.menu-button');
             document.querySelectorAll('.card-menu.show').forEach(m => m.classList.remove('show'));
@@ -443,8 +429,6 @@
                 form.submit();
             }
         }
-
-        // FUNCIÓN GLOBAL CORREGIDA: Busca en el listado maestro de la memoria
         function showStatusDetails(statusCode, title, headerClass) {
             const listContainer = document.getElementById('statusDetailsList');
             const emptyMsg = document.getElementById('emptyStatusMsg');
@@ -462,15 +446,12 @@
                 new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
                 return;
             }
-
-            // Recorrer el universo completo de operarios del periodo (sin importar filtros HTML)
             window.attendanceData.forEach(row => {
                 let userDates = [];
 
                 if (row.dailyStatus) {
                     Object.keys(row.dailyStatus).forEach(dateKey => {
                         if (row.dailyStatus[dateKey] === statusCode) {
-                            // Extraer año, mes, día de la clave del diccionario (ej: "2026-05-21T00:00:00")
                             const rawDate = dateKey.split('T')[0];
                             const parts = rawDate.split('-');
 
@@ -485,10 +466,7 @@
                         }
                     });
                 }
-
-                // Si acumuló días, se agrega al listado general del modal
                 if (userDates.length > 0) {
-                    // Ordenar las fechas cronológicamente para que se vea limpio
                     userDates.sort((a, b) => a.localeCompare(b));
                     const daysText = userDates.join(', ');
 
@@ -511,8 +489,6 @@
                     foundCount++;
                 }
             });
-
-            // Control visual del mensaje de lista vacía
             if (foundCount === 0) {
                 emptyMsg.classList.remove('d-none');
                 listContainer.classList.add('d-none');
@@ -520,7 +496,6 @@
                 emptyMsg.classList.add('d-none');
                 listContainer.classList.remove('d-none');
             }
-
             new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
         }
     </script>
