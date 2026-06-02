@@ -228,6 +228,62 @@
             item.addEventListener('click', function() {
                 window.location.href = '/Ausentismo/ReporteMecanicosHoras?periodId=' + this.getAttribute('data-id');
             });
+            });<script>
+        function calcularDescuento(el) {
+            const group = el.closest('.time-input-group');
+            const row = el.closest('tr');
+            const h = parseInt(group.querySelector('.in-h').value) || 0;
+            const m = parseInt(group.querySelector('.in-m').value) || 0;
+            const totalMinutos = (h * 60) + m;
+            const monto = totalMinutos * 0.0275;
+
+            row.querySelector('.label-descuento').innerText = "$ " + monto.toFixed(2);
+
+            // CORRECCIÓN: Apuntar al endpoint correcto de Mecánicos
+            fetch('/Ausentismo/GuardarHorasMecanico', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    OperatorCode: group.getAttribute('data-opid'),
+                    PeriodId: parseInt(group.getAttribute('data-period')),
+                    Hours: h,
+                    Minutes: m
+                })
+            });
+        }
+
+        function saveObservation(element) {
+            const text = element.innerText.trim();
+            element.classList.add('saving');
+            fetch('/Ausentismo/GuardarObservacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    OperatorCode: element.getAttribute('data-opid'),
+                    PeriodId: parseInt(element.getAttribute('data-period')),
+                    Observation: text,
+                    SemanaNumero: parseInt(element.getAttribute('data-semana') || "1")
+                })
+            }).then(() => element.classList.remove('saving'));
+        }
+
+        const input = document.getElementById('periodSearchInput');
+        const container = document.getElementById('periodSearchResults');
+        input.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            if (searchText.length === 0) { container.style.display = 'none'; return; }
+            document.querySelectorAll('.search-item').forEach(item => {
+                if (item.getAttribute('data-filter').includes(searchText)) {
+                    item.style.display = 'block';
+                } else item.style.display = 'none';
+            });
+            container.style.display = 'block';
+        });
+
+        document.querySelectorAll('.search-item').forEach(item => {
+            item.addEventListener('click', function() {
+                window.location.href = '/Ausentismo/ReporteMecanicosHoras?periodId=' + this.getAttribute('data-id');
+            });
         });
     </script>
 </body>

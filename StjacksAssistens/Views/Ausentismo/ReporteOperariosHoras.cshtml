@@ -163,7 +163,8 @@
 
             row.querySelector('.label-descuento').innerText = "$ " + monto.toFixed(2);
 
-            fetch('/Ausentismo/GuardarHorasEmpaque', {
+            // CORRECCIÓN: Se cambió de GuardarHorasEmpaque a GuardarHorasConfeccion
+            fetch('/Ausentismo/GuardarHorasConfeccion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -205,7 +206,8 @@
 
         document.querySelectorAll('.search-item').forEach(item => {
             item.addEventListener('click', function() {
-                window.location.href = '/Ausentismo/ReporteConfeccionHoras?periodId=' + this.getAttribute('data-id');
+                // CORRECCIÓN: Se cambió al Action correcto del Controlador
+                window.location.href = '/Ausentismo/ReporteOperariosHoras?periodId=' + this.getAttribute('data-id');
             });
         });
     </script>

@@ -32,8 +32,11 @@ namespace StjacksAssistens.Controllers
                 .Where(o => o.Category.Name.Contains("Confeccion"))
                 .ToListAsync();
 
+            var operatorIds = operators.Select(o => o.Id).ToList();
+
+            // CORRECCIÓN: Filtrar asistencias SOLO de los operarios de Confección de este periodo
             var asistencias = await _context.Attendence
-                .Where(a => a.PeriodId == periodId && a.Status != "X")
+                .Where(a => a.PeriodId == periodId && a.Status != "X" && operatorIds.Contains(a.OperatorsId))
                 .ToListAsync();
 
             var listaEmpleados = new List<EmpleadoAusencia>();
@@ -80,8 +83,10 @@ namespace StjacksAssistens.Controllers
             var periodo = await _context.Periodss.FindAsync(periodId);
             ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
 
+            // CORRECCIÓN: Filtrar asistencias PP asegurando que pertenezcan a Confección
             var asistenciasConPP = await _context.Attendence
-                .Where(a => a.PeriodId == periodId && a.Status == "PP")
+                .Include(a => a.Operator).ThenInclude(o => o.Category)
+                .Where(a => a.PeriodId == periodId && a.Status == "PP" && a.Operator.Category.Name.Contains("Confeccion"))
                 .ToListAsync();
 
             var idsConfeccionConFalta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
@@ -125,6 +130,7 @@ namespace StjacksAssistens.Controllers
                 TipoPlanilla = "06 Obra (Catorcenal)"
             });
         }
+        #endregion
 
         // 3. GUARDAR HORAS ESPECÍFICO PARA CONFECCIÓN
         [HttpPost]
@@ -174,11 +180,6 @@ namespace StjacksAssistens.Controllers
             detalle.Motivo = !string.IsNullOrEmpty(obsBD) ? obsBD : string.Join(", ", faltas);
             return detalle;
         }
-
-        #endregion
-
-
-
 
 
         #region REPORTE MECÁNICOS
@@ -237,23 +238,34 @@ namespace StjacksAssistens.Controllers
                 var ultimo = await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
                 return RedirectToAction(nameof(ReporteMecanicosHoras), new { periodId = ultimo?.Id });
             }
+
             var periodo = await _context.Periodss.FindAsync(periodId);
             ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
+
+            // CORRECCIÓN CRÍTICA: Filtrar asistencias PP asegurando que pertenezcan ÚNICAMENTE a Mecánicos
             var asistenciasConPP = await _context.Attendence
-                .Where(a => a.PeriodId == periodId && a.Status == "PP")
+                .Include(a => a.Operator).ThenInclude(o => o.Category)
+                .Where(a => a.PeriodId == periodId && a.Status == "PP" && a.Operator.Category.Name == "Mecanicos")
                 .ToListAsync();
+
             var idsMecanicosConFalta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
+
+            // Obtener los operadores mecánicos que están en esa lista de faltas
             var mecanicos = await _context.Operators
                 .Include(o => o.Category)
-                .Where(o => idsMecanicosConFalta.Contains(o.Id))
+                .Where(o => o.Category.Name == "Mecanicos" && idsMecanicosConFalta.Contains(o.Id))
                 .ToListAsync();
+
             var listaMecanicos = new List<EmpleadoAusentismoRow>();
+
             foreach (var mec in mecanicos)
             {
                 var asisMec = await _context.Attendence
                     .Where(a => a.OperatorsId == mec.Id && a.PeriodId == periodId)
                     .ToListAsync();
+
                 var registroConHoras = asisMec.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
+
                 listaMecanicos.Add(new EmpleadoAusentismoRow
                 {
                     Codigo = mec.Code,
@@ -261,7 +273,7 @@ namespace StjacksAssistens.Controllers
                     HorasAusente = registroConHoras?.Hours ?? 0,
                     MinutosAusente = registroConHoras?.Minutes ?? 0,
                     Semanas = new List<SemanaDatos> {
-                new SemanaDatos { 
+                new SemanaDatos {
                     Lunes = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Monday && a.Status == "PP")?.AttendanceDate,
                     Martes = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Tuesday && a.Status == "PP")?.AttendanceDate,
                     Miercoles = asisMec.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Wednesday && a.Status == "PP")?.AttendanceDate,
@@ -272,8 +284,9 @@ namespace StjacksAssistens.Controllers
             }
                 });
             }
+
             return View(new MecanicosReportViewModel { Periodo = periodo, Empleados = listaMecanicos });
-        }
+        } 
         [HttpPost]
         [HttpPost]
         public async Task<IActionResult> GuardarHorasMecanico([FromBody] StjacksAssistens.Models.TimeRequest request)
@@ -323,122 +336,202 @@ namespace StjacksAssistens.Controllers
             return Ok();
         }
         #region REPORTE EMPAQUE
+
+        // 1. REPORTE POR DÍA (Ausentismo Regular Empaque)
         public async Task<IActionResult> ReporteEmpaque(int? periodId)
         {
             if (periodId == null || periodId == 0)
             {
                 var ultimo = await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                if (ultimo == null) return NotFound();
-                return RedirectToAction(nameof(ReporteEmpaque), new { periodId = ultimo.Id });
+                return RedirectToAction(nameof(ReporteEmpaque), new { periodId = ultimo?.Id });
             }
 
             var periodo = await _context.Periodss.FindAsync(periodId);
             ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
-            var operators = await _context.Operators
+
+            // FILTRO ESTRICTO: Obtener únicamente los operarios de la categoría "Empaque"
+            var operariosEmpaque = await _context.Operators
                 .Include(o => o.Category)
-                .Where(o => o.Category.Name.Contains("Empaque"))
+                .Where(o => o.Category.Name == "Empaque")
                 .ToListAsync();
 
+            var idsEmpaque = operariosEmpaque.Select(o => o.Id).ToList();
+
+            // Obtener asistencias del periodo SOLO para los operarios de Empaque
             var asistencias = await _context.Attendence
-                .Where(a => a.PeriodId == periodId && a.Status != "X")
+                .Where(a => a.PeriodId == periodId && idsEmpaque.Contains(a.OperatorsId))
                 .ToListAsync();
 
+            // CORRECCIÓN: Se cambia a EmpleadoAusencia para que coincida con el ViewModel
             var listaEmpleados = new List<EmpleadoAusencia>();
+            var finSemana1 = periodo.StartDate.AddDays(6).Date;
 
-            foreach (var op in operators)
+            foreach (var op in operariosEmpaque)
             {
                 var asisOp = asistencias.Where(a => a.OperatorsId == op.Id).ToList();
-                if (asisOp.Any())
+
+                // Solo mostrar en el reporte si el empleado tiene alguna incidencia (Falta, PP o tiene Observación)
+                if (asisOp.Any(a => a.Status == "PP" || a.Status == "F" || !string.IsNullOrEmpty(a.Observation)))
                 {
-                    DateTime midPoint = periodo.StartDate.AddDays(7);
+                    var asisSem1 = asisOp.Where(a => a.AttendanceDate.Date <= finSemana1).ToList();
+                    var asisSem2 = asisOp.Where(a => a.AttendanceDate.Date > finSemana1).ToList();
+
                     listaEmpleados.Add(new EmpleadoAusencia
                     {
                         Codigo = op.Code.ToString(),
                         Nombre = op.Name,
+                        // CORRECCIÓN: Se instancia como SemanaDetalle
                         Semanas = new List<SemanaDetalle>
                 {
-                    GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint)),
-                    GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint))
+                    new SemanaDetalle
+                    {
+                        Lunes = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Monday)?.AttendanceDate,
+                        Martes = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Tuesday)?.AttendanceDate,
+                        Miercoles = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Wednesday)?.AttendanceDate,
+                        Jueves = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Thursday)?.AttendanceDate,
+                        Viernes = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Friday)?.AttendanceDate,
+                        Motivo = asisSem1.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation ?? ""
+                    },
+                    new SemanaDetalle
+                    {
+                        Lunes = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Monday)?.AttendanceDate,
+                        Martes = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Tuesday)?.AttendanceDate,
+                        Miercoles = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Wednesday)?.AttendanceDate,
+                        Jueves = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Thursday)?.AttendanceDate,
+                        Viernes = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Friday)?.AttendanceDate,
+                        Motivo = asisSem2.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation ?? ""
+                    }
                 }
                     });
                 }
             }
-            return View(new OperariosReportViewModel
+
+            var model = new OperariosReportViewModel
             {
+                CDC = "400",
+                AreaNombre = "CONFECCIÓN Y EMPAQUE (EMPAQUE)",
+                TipoPlanilla = "14 Días (Catorcenal)",
                 Periodo = periodo,
-                Empleados = listaEmpleados,
-                AreaNombre = "EMPAQUE / PRODUCTO TERMINADO",
-                CDC = "410",
-                TipoPlanilla = "06 Obra (Catorcenal)"
-            });
+                Empleados = listaEmpleados
+            };
+
+            return View(model);
         }
+
+        // 2. REPORTE POR HORAS (Faltas Parciales Empaque)
         public async Task<IActionResult> ReporteEmpaqueHoras(int? periodId)
         {
             if (periodId == null || periodId == 0)
             {
                 var ultimo = await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                if (ultimo == null) return NotFound();
-                return RedirectToAction(nameof(ReporteEmpaqueHoras), new { periodId = ultimo.Id });
+                return RedirectToAction(nameof(ReporteEmpaqueHoras), new { periodId = ultimo?.Id });
             }
+
             var periodo = await _context.Periodss.FindAsync(periodId);
             ViewBag.TodosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
-            var asistenciasConPP = await _context.Attendence
-                .Where(a => a.PeriodId == periodId && a.Status == "PP")
-                .ToListAsync();
-            var idsEmpaqueConFalta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
-            var operators = await _context.Operators
+
+            // FILTRO ESTRICTO: Obtener únicamente los operarios de la categoría "Empaque"
+            var operariosEmpaque = await _context.Operators
                 .Include(o => o.Category)
-                .Where(o => o.Category.Name.Contains("Empaque") && idsEmpaqueConFalta.Contains(o.Id))
+                .Where(o => o.Category.Name == "Empaque")
                 .ToListAsync();
+
+            var idsEmpaque = operariosEmpaque.Select(o => o.Id).ToList();
+
+            // Filtrar asistencias que sean exclusivamente "PP" y correspondan a Empaque
+            var asistenciasConPP = await _context.Attendence
+                .Where(a => a.PeriodId == periodId && a.Status == "PP" && idsEmpaque.Contains(a.OperatorsId))
+                .ToListAsync();
+
+            var idsConFaltaConcreta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
+
+            // CORRECCIÓN: Se cambia a EmpleadoAusencia para unificar tipos
             var listaEmpleados = new List<EmpleadoAusencia>();
-            foreach (var op in operators)
+            var finSemana1 = periodo.StartDate.AddDays(6).Date;
+
+            foreach (var op in operariosEmpaque.Where(o => idsConFaltaConcreta.Contains(o.Id)))
             {
-                var asisOp = await _context.Attendence
+                var asisEmp = await _context.Attendence
                     .Where(a => a.OperatorsId == op.Id && a.PeriodId == periodId)
                     .ToListAsync();
-                var registroConHoras = asisOp.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
-                DateTime midPoint = periodo.StartDate.AddDays(7);
+
+                var registroConHoras = asisEmp.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
+
+                var asisSem1 = asisEmp.Where(a => a.AttendanceDate.Date <= finSemana1).ToList();
+                var asisSem2 = asisEmp.Where(a => a.AttendanceDate.Date > finSemana1).ToList();
+
                 listaEmpleados.Add(new EmpleadoAusencia
                 {
                     Codigo = op.Code.ToString(),
                     Nombre = op.Name,
                     HorasAusente = registroConHoras?.Hours ?? 0,
                     MinutosAusente = registroConHoras?.Minutes ?? 0,
+                    // CORRECCIÓN: Se cambia a SemanaDetalle
                     Semanas = new List<SemanaDetalle>
             {
-                GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint)),
-                GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint))
+                new SemanaDetalle
+                {
+                    Lunes = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Monday && a.Status == "PP")?.AttendanceDate,
+                    Martes = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Tuesday && a.Status == "PP")?.AttendanceDate,
+                    Miercoles = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Wednesday && a.Status == "PP")?.AttendanceDate,
+                    Jueves = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Thursday && a.Status == "PP")?.AttendanceDate,
+                    Viernes = asisSem1.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Friday && a.Status == "PP")?.AttendanceDate,
+                    Motivo = asisSem1.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation ?? ""
+                },
+                new SemanaDetalle
+                {
+                    Lunes = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Monday && a.Status == "PP")?.AttendanceDate,
+                    Martes = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Tuesday && a.Status == "PP")?.AttendanceDate,
+                    Miercoles = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Wednesday && a.Status == "PP")?.AttendanceDate,
+                    Jueves = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Thursday && a.Status == "PP")?.AttendanceDate,
+                    Viernes = asisSem2.FirstOrDefault(a => a.AttendanceDate.DayOfWeek == DayOfWeek.Friday && a.Status == "PP")?.AttendanceDate,
+                    Motivo = asisSem2.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation ?? ""
+                }
             }
                 });
             }
-            return View(new OperariosReportViewModel
+
+            var model = new OperariosReportViewModel
             {
+                CDC = "400",
+                AreaNombre = "CONFECCIÓN Y EMPAQUE (EMPAQUE)",
+                TipoPlanilla = "14 Días (Catorcenal)",
                 Periodo = periodo,
-                Empleados = listaEmpleados,
-                AreaNombre = "EMPAQUE / PRODUCTO TERMINADO",
-                CDC = "410",
-                TipoPlanilla = "06 Obra (Catorcenal)"
-            });
+                Empleados = listaEmpleados
+            };
+
+            return View(model);
         }
+
+        // 3. GUARDAR HORAS DE EMPAQUE 
         [HttpPost]
         public async Task<IActionResult> GuardarHorasEmpaque([FromBody] StjacksAssistens.Models.TimeRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.OperatorCode))
                 return BadRequest("Datos incompletos.");
-            var operario = await _context.Operators.FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
+
+            if (!int.TryParse(request.OperatorCode, out int codeInt))
+                return BadRequest("El código del operario debe ser numérico.");
+
+            var operario = await _context.Operators.FirstOrDefaultAsync(o => o.Code == codeInt);
             if (operario == null) return NotFound("Operario no encontrado.");
+
             var asistencias = await _context.Attendence
                 .Where(a => a.OperatorsId == operario.Id && a.PeriodId == request.PeriodId)
                 .ToListAsync();
+
             if (!asistencias.Any()) return NotFound("Sin registros de asistencia.");
+
             foreach (var item in asistencias)
             {
                 item.Hours = request.Hours;
                 item.Minutes = request.Minutes;
             }
+
             await _context.SaveChangesAsync();
             return Ok();
         }
+
         #endregion
     }
 }

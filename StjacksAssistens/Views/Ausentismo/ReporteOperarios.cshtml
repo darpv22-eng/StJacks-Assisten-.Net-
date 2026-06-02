@@ -171,7 +171,8 @@
 
         document.querySelectorAll('.search-item').forEach(item => {
             item.addEventListener('click', function() {
-                window.location.href = '/Ausentismo/ReporteConfeccionDia?periodId=' + this.getAttribute('data-id');
+                // CORRECCIÓN: Se cambió al Action correcto del Controlador
+                window.location.href = '/Ausentismo/ReporteOperarios?periodId=' + this.getAttribute('data-id');
             });
         });
     </script>
