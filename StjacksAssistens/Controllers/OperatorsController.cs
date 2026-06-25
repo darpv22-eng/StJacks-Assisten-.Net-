@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using StjacksAssistens.Data;
 using StjacksAssistens.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace StjacksAssistens.Controllers
 {
@@ -15,86 +19,194 @@ namespace StjacksAssistens.Controllers
             _context = context;
         }
 
+        // =========================================================================
+        // VISTA PRINCIPAL: LISTAR OPERARIOS Y GESTIONAR ASISTENCIA
+        // =========================================================================
         public async Task<IActionResult> Index(int? periodId, int? categoryId)
         {
-            var period = periodId.HasValue
-                ? await _context.Periodss.FindAsync(periodId)
-                : await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
+            // 1. Cargar períodos y categorías para los combos/pestañas de la vista
+            var allPeriods = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var allCategories = await _context.Set<Category>().ToListAsync();
 
-            ViewBag.Categories = await _context.Category.ToListAsync();
-            ViewBag.AllPeriods = await _context.Periodss.ToListAsync();
+            ViewBag.AllPeriods = allPeriods;
+            ViewBag.Categories = allCategories;
             ViewBag.SelectedCategory = categoryId;
 
-            if (period == null)
+            // 2. Determinar periodo actual (Corrección del error de compilación p.PeriodId -> p.Id)
+            Periodss? currentPeriod = null;
+            if (periodId.HasValue)
             {
-                return View(new AttendanceViewModel
-                {
-                    CurrentPeriod = new Periodss { Description = "Sin Periodo" },
-                    DaysInPeriod = new List<DateTime>(),
-                    Rows = new List<OperatorAttendanceRow>()
-                });
+                currentPeriod = allPeriods.FirstOrDefault(p => p.Id == periodId.Value);
+            }
+            else
+            {
+                // Busca el activo, si no hay ninguno, toma el último de la lista
+                currentPeriod = allPeriods.FirstOrDefault(p => p.IsActive == true) ?? allPeriods.FirstOrDefault();
             }
 
-            var days = new List<DateTime>();
-            for (var dt = period.StartDate.Date; dt <= period.EndDate.Date; dt = dt.AddDays(1))
+            var viewModel = new AttendanceViewModel
             {
-                if (dt.DayOfWeek != DayOfWeek.Saturday && dt.DayOfWeek != DayOfWeek.Sunday)
-                    days.Add(dt);
-            }
-
-            var query = _context.Operators.Include(o => o.Category).AsQueryable();
-            if (categoryId.HasValue) query = query.Where(o => o.CategoryId == categoryId);
-            var operators = await query.ToListAsync();
-
-            var allAttendance = await _context.Attendence
-                .Where(a => a.PeriodId == period.Id)
-                .ToListAsync();
-
-            var model = new AttendanceViewModel
-            {
-                CurrentPeriod = period,
-                DaysInPeriod = days,
-                Rows = operators.Select(o => new OperatorAttendanceRow
-                {
-                    OperatorsId = o.Id,
-                    Code = o.Code,
-                    Name = o.Name,
-                    CategoryName = o.Category?.Name,
-                    DailyStatus = days.ToDictionary(
-                        d => d,
-                        d => allAttendance.FirstOrDefault(a =>
-                            a.OperatorsId == o.Id &&
-                            a.AttendanceDate.Date == d.Date
-                        )?.Status ?? "X"
-                    )
-                }).ToList()
+                CurrentPeriod = currentPeriod,
+                DaysInPeriod = new List<DateTime>(),
+                Rows = new List<OperatorAttendanceRow>()
             };
 
-            ViewBag.CurrentPeriodId = period.Id;
-            return View(model);
+            if (currentPeriod != null)
+            {
+                // Generar los días del periodo, excluyendo Sábados y Domingos
+                for (var date = currentPeriod.StartDate; date <= currentPeriod.EndDate; date = date.AddDays(1))
+                {
+                    // Solo agregamos si NO es Sábado (Saturday) y NO es Domingo (Sunday)
+                    if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
+                    {
+                        viewModel.DaysInPeriod.Add(date);
+                    }
+                }
+
+                // 3. CONSULTA: Traer operarios incluyendo sus relaciones de Área y Línea
+                var query = _context.Set<Operators>()
+                    .Include(o => o.Area)
+                    .Include(o => o.Linea)
+                    .AsQueryable();
+
+                // Filtrado opcional por categoría (Área o Línea) si se presiona un filtro en la vista
+                if (categoryId.HasValue)
+                {
+                    query = query.Where(o => o.AreaId == categoryId.Value || o.LineaId == categoryId.Value);
+                }
+
+                var operatorsList = await query.ToListAsync();
+
+                // 4. Cargar las asistencias existentes de este periodo
+                var attendances = await _context.Set<Attendence>()
+                    .Where(a => a.PeriodId == currentPeriod.Id)
+                    .ToListAsync();
+
+                // 5. Construir las filas del ViewModel para la tabla
+                foreach (var op in operatorsList)
+                {
+                    string areaName = op.Area?.Name ?? "Sin Área";
+                    string lineaName = op.Linea != null ? $" - {op.Linea.Name}" : "";
+
+                    var row = new OperatorAttendanceRow
+                    {
+                        OperatorsId = op.OperatorsId,
+                        Code = op.Code,
+                        Name = op.Name,
+                        AreaId = op.AreaId,
+                        LineaId = op.LineaId,
+                        CategoryName = $"{areaName}{lineaName}"
+                    };
+
+                    // Llenar el estado de asistencia para cada día
+                    foreach (var day in viewModel.DaysInPeriod)
+                    {
+                        var att = attendances.FirstOrDefault(a => a.OperatorsId == op.OperatorsId && a.AttendanceDate.Date == day.Date);
+                        row.DailyStatus[day.Date] = att?.Status ?? "X"; // "X" por defecto si está vacío
+                    }
+
+                    viewModel.Rows.Add(row);
+                }
+            }
+
+            return View(viewModel);
         }
 
-       
-        public async Task<IActionResult> ReporteOperarios(int? periodId) // 1. Cambiamos a int?
+        // =========================================================================
+        // PROCESAR MODAL: CREAR NUEVO OPERARIO (Método Único y Optimizado)
+        // =========================================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(int Code, string Name, int? AreaId, int? LineaId)
         {
-            // 2. Insertamos la validación aquí al principio
+            if (ModelState.IsValid)
+            {
+                var nuevoOperario = new Operators
+                {
+                    Code = Code,
+                    Name = Name,
+                    AreaId = AreaId,
+                    LineaId = LineaId
+                };
+
+                // Validamos resguardo para CategoryId si sigue mapeado como obligatorio en BD
+                if (AreaId.HasValue)
+                {
+                    nuevoOperario.CategoryId = AreaId.Value;
+                }
+                else if (LineaId.HasValue)
+                {
+                    nuevoOperario.CategoryId = LineaId.Value;
+                }
+                else
+                {
+                    var categoriaPorDefecto = await _context.Set<Category>().FirstOrDefaultAsync();
+                    if (categoriaPorDefecto != null)
+                    {
+                        nuevoOperario.CategoryId = categoriaPorDefecto.Id;
+                    }
+                }
+
+                _context.Add(nuevoOperario);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =========================================================================
+        // PROCESAR MODAL: EDICIÓN / ASIGNAR ÁREA Y LÍNEA MANUALMENTE
+        // =========================================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int OperatorsId, int Code, string Name, int? AreaId, int? LineaId)
+        {
+            var operario = await _context.Set<Operators>().FindAsync(OperatorsId);
+            if (operario == null)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                operario.Code = Code;
+                operario.Name = Name;
+                operario.AreaId = AreaId;   // Asignación manual del Área desde el modal
+                operario.LineaId = LineaId; // Asignación manual de la Línea desde el modal
+
+                if (AreaId.HasValue)
+                {
+                    operario.CategoryId = AreaId.Value;
+                }
+
+                _context.Update(operario);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =========================================================================
+        // VISTA / REPORTE: AUSENTISMO DE OPERARIOS
+        // =========================================================================
+        public async Task<IActionResult> ReporteOperarios(int? periodId)
+        {
             if (periodId == null || periodId == 0)
             {
-                var ultimoPeriodo = await _context.Periodss.OrderByDescending(p => p.Id).FirstOrDefaultAsync();
+                var ultimoPeriodo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
                 if (ultimoPeriodo == null) return NotFound("No hay periodos creados aún.");
 
                 return RedirectToAction(nameof(ReporteOperarios), new { periodId = ultimoPeriodo.Id });
             }
 
-            // 3. El resto de tu lógica continúa igual, usando el periodId validado
-            var periodo = await _context.Periodss.FindAsync(periodId);
+            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
             if (periodo == null) return NotFound();
 
-            var todosLosPeriodos = await _context.Periodss.OrderByDescending(p => p.StartDate).ToListAsync();
-
-            // Obtenemos todos los operarios y su asistencia para este periodo
-            var operators = await _context.Operators.ToListAsync();
-            var asistencias = await _context.Attendence
+            var todosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var operators = await _context.Set<Operators>().ToListAsync();
+            var asistencias = await _context.Set<Attendence>()
                 .Where(a => a.PeriodId == periodId && a.Status != "X")
                 .ToListAsync();
 
@@ -102,17 +214,18 @@ namespace StjacksAssistens.Controllers
 
             foreach (var op in operators)
             {
-                var asistenciasOp = asistencias.Where(a => a.OperatorsId == op.Id).ToList();
+                // Corrección del error de compilación: op.Id -> op.OperatorsId
+                var asistenciasOp = asistencias.Where(a => a.OperatorsId == op.OperatorsId).ToList();
 
                 if (asistenciasOp.Any())
                 {
                     DateTime midPoint = periodo.StartDate.AddDays(7);
 
                     var semanas = new List<SemanaDetalle>
-            {
-                GenerarDetalleSemana(asistenciasOp.Where(a => a.AttendanceDate < midPoint)),
-                GenerarDetalleSemana(asistenciasOp.Where(a => a.AttendanceDate >= midPoint))
-            };
+                    {
+                        GenerarDetalleSemana(asistenciasOp.Where(a => a.AttendanceDate < midPoint)),
+                        GenerarDetalleSemana(asistenciasOp.Where(a => a.AttendanceDate >= midPoint))
+                    };
 
                     listaEmpleados.Add(new EmpleadoAusencia
                     {
@@ -135,7 +248,8 @@ namespace StjacksAssistens.Controllers
             ViewBag.TodosLosPeriodos = todosLosPeriodos;
             return View(viewModel);
         }
-        // Función auxiliar para mapear fechas a columnas de lunes a viernes
+
+        // Método auxiliar privado para formatear semanas en el reporte
         private SemanaDetalle GenerarDetalleSemana(IEnumerable<Attendence> asistencias)
         {
             var detalle = new SemanaDetalle();
@@ -158,13 +272,14 @@ namespace StjacksAssistens.Controllers
             return detalle;
         }
 
-        // --- MÉTODOS EXISTENTES ---
-
+        // =========================================================================
+        // ACCIÓN AJAX: CAMBIAR ESTADO DE ASISTENCIA (Toggle en la cuadrícula)
+        // =========================================================================
         [HttpPost]
         public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
         {
             var attendanceDate = DateTime.Parse(date).Date;
-            var attendance = await _context.Attendence
+            var attendance = await _context.Set<Attendence>()
                 .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate && a.PeriodId == periodId);
 
             if (attendance == null)
@@ -176,7 +291,7 @@ namespace StjacksAssistens.Controllers
                     Status = status,
                     PeriodId = periodId
                 };
-                _context.Attendence.Add(attendance);
+                _context.Set<Attendence>().Add(attendance);
             }
             else
             {
@@ -188,11 +303,14 @@ namespace StjacksAssistens.Controllers
             return Json(new { success = true });
         }
 
+        // =========================================================================
+        // PROCESAR MODALES: ACCIONES COMPLEMENTARIAS DE PERIODOS (Crear, Editar, Borrar)
+        // =========================================================================
         [HttpPost]
         public async Task<IActionResult> CreatePeriod(string Description, DateTime StartDate, DateTime EndDate)
         {
             var newPeriod = new Periodss { Description = Description, StartDate = StartDate, EndDate = EndDate, IsActive = true };
-            _context.Periodss.Add(newPeriod);
+            _context.Set<Periodss>().Add(newPeriod);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index), new { periodId = newPeriod.Id });
         }
@@ -200,7 +318,7 @@ namespace StjacksAssistens.Controllers
         [HttpPost]
         public async Task<IActionResult> EditPeriod(int id, string Description)
         {
-            var period = await _context.Periodss.FindAsync(id);
+            var period = await _context.Set<Periodss>().FindAsync(id);
             if (period != null)
             {
                 period.Description = Description;
@@ -211,32 +329,12 @@ namespace StjacksAssistens.Controllers
 
         public async Task<IActionResult> DeletePeriod(int id)
         {
-            var period = await _context.Periodss.FindAsync(id);
+            var period = await _context.Set<Periodss>().FindAsync(id);
             if (period != null)
             {
-                var relatedAttendance = _context.Attendence.Where(a => a.PeriodId == id);
-                _context.Attendence.RemoveRange(relatedAttendance);
-                _context.Periodss.Remove(period);
-                await _context.SaveChangesAsync();
-            }
-            return RedirectToAction(nameof(Index));
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(Operators op)
-        {
-            _context.Add(op);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var op = await _context.Operators.FindAsync(id);
-            if (op != null)
-            {
-                _context.Operators.Remove(op);
+                var relatedAttendance = _context.Set<Attendence>().Where(a => a.PeriodId == id);
+                _context.Set<Attendence>().RemoveRange(relatedAttendance);
+                _context.Set<Periodss>().Remove(period);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
