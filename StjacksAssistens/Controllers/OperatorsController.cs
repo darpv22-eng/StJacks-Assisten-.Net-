@@ -24,7 +24,6 @@ namespace StjacksAssistens.Controllers
         // =========================================================================
         public async Task<IActionResult> Index(int? periodId, int? categoryId)
         {
-            // 1. Cargar períodos y categorías para los combos/pestañas de la vista
             var allPeriods = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
             var allCategories = await _context.Set<Category>().ToListAsync();
 
@@ -275,8 +274,35 @@ namespace StjacksAssistens.Controllers
         // =========================================================================
         // ACCIÓN AJAX: CAMBIAR ESTADO DE ASISTENCIA (Toggle en la cuadrícula)
         // =========================================================================
+        //[HttpPost]
+        //public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
+        //{
+        //    var attendanceDate = DateTime.Parse(date).Date;
+        //    var attendance = await _context.Set<Attendence>()
+        //        .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate && a.PeriodId == periodId);
+
+        //    if (attendance == null)
+        //    {
+        //        attendance = new Attendence
+        //        {
+        //            OperatorsId = operatorId,
+        //            AttendanceDate = attendanceDate,
+        //            Status = status,
+        //            PeriodId = periodId
+        //        };
+        //        _context.Set<Attendence>().Add(attendance);
+        //    }
+        //    else
+        //    {
+        //        attendance.Status = status;
+        //        _context.Update(attendance);
+        //    }
+
+        //    await _context.SaveChangesAsync();
+        //    return Json(new { success = true });
+        //}
         [HttpPost]
-        public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
+        public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId, string start = null, string end = null)
         {
             var attendanceDate = DateTime.Parse(date).Date;
             var attendance = await _context.Set<Attendence>()
@@ -284,25 +310,24 @@ namespace StjacksAssistens.Controllers
 
             if (attendance == null)
             {
-                attendance = new Attendence
-                {
-                    OperatorsId = operatorId,
-                    AttendanceDate = attendanceDate,
-                    Status = status,
-                    PeriodId = periodId
-                };
+                attendance = new Attendence { OperatorsId = operatorId, AttendanceDate = attendanceDate, Status = status, PeriodId = periodId };
                 _context.Set<Attendence>().Add(attendance);
             }
             else
             {
                 attendance.Status = status;
-                _context.Update(attendance);
+            }
+
+            // Guardar horas si no es "X"
+            if (status != "X" && !string.IsNullOrEmpty(start) && !string.IsNullOrEmpty(end))
+            {
+                attendance.StartTime = TimeSpan.Parse(start);
+                attendance.EndTime = TimeSpan.Parse(end);
             }
 
             await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
-
         // =========================================================================
         // PROCESAR MODALES: ACCIONES COMPLEMENTARIAS DE PERIODOS (Crear, Editar, Borrar)
         // =========================================================================

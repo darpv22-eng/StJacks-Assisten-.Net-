@@ -20,6 +20,11 @@ namespace StjacksAssistens.Models
         public int? Hours { get; set; }   // El ? permite NULL
         public int? Minutes { get; set; } // El ? permite NULL
 
+
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+
+
         [ForeignKey("PeriodId")]
         public virtual Periodss? Period { get; set; }
         public virtual Operators Operator { get; set; }

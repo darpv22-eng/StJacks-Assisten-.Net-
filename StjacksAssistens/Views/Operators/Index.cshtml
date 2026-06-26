@@ -1,6 +1,5 @@
 ﻿@using System.Text.Encodings.Web
 @model StjacksAssistens.Models.AttendanceViewModel
-
 @{
     ViewData["Title"] = "Asistencia";
     var totalOperarios = Model?.Rows?.Count ?? 0;
@@ -8,7 +7,6 @@
     var totalPP = 0;
     var totalISS = 0;
     var totalINC = 0;
-
     if (Model?.Rows != null)
     {
         foreach (var row in Model.Rows)
@@ -22,19 +20,13 @@
             }
         }
     }
-
     var todasLasCategorias = (ViewBag.Categories as List<StjacksAssistens.Models.Category>) ?? new List<StjacksAssistens.Models.Category>();
-
-    // Clasificación de Líneas vs Áreas
     var listaLineas = todasLasCategorias
         .Where(c => !string.IsNullOrEmpty(c.Name) && (c.Name.ToLower().Contains("linea") || c.Name.ToLower().Contains("línea") || char.IsDigit(c.Name.Trim()[0])))
         .ToList();
-
     var listaAreas = todasLasCategorias.Except(listaLineas).ToList();
 }
-
 <link rel="stylesheet" href="~/css/operators.css" />
-
 <style>
     :root {
         --primary-color: #4361ee;
@@ -43,7 +35,6 @@
         --warning-color: #f59e0b;
         --info-color: #06b6d4;
     }
-
     .context-menu {
         display: none;
         position: absolute;
@@ -54,37 +45,31 @@
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         border: 1px solid rgba(0,0,0,0.05);
     }
-
         .context-menu .item {
             padding: 12px 15px;
             cursor: pointer;
             font-size: 14px;
             transition: 0.2s;
         }
-
             .context-menu .item:hover {
                 background: #f8f9fa;
                 color: var(--primary-color);
             }
-
     .table-container {
         background: white;
         border-radius: 15px;
         padding: 20px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
-
     .attendance-cell {
         transition: all 0.2s ease;
         border-radius: 4px;
         user-select: none;
     }
-
         .attendance-cell:hover {
             background-color: rgba(67, 97, 238, 0.05);
             transform: scale(1.1);
         }
-
     .stat-card {
         background: white;
         border-radius: 12px;
@@ -92,11 +77,9 @@
         border: 1px solid rgba(0,0,0,0.05);
         transition: transform 0.2s;
     }
-
         .stat-card:hover {
             transform: translateY(-5px);
         }
-
     .stat-icon {
         width: 40px;
         height: 40px;
@@ -106,14 +89,12 @@
         justify-content: center;
         font-size: 1.2rem;
     }
-
     .nav-link.period-tab.active {
         background: var(--primary-color) !important;
         color: white !important;
         box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
     }
 </style>
-
 <div class="row align-items-center mb-4">
     <div class="col-md-6">
         <h1 class="fw-bold m-0">Control de Asistencia</h1>
@@ -131,7 +112,6 @@
         </button>
     </div>
 </div>
-
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-lg-2">
         <div class="stat-card shadow-sm">
@@ -182,7 +162,6 @@
         </div>
     </div>
 </div>
-
 <div class="mb-4">
     <ul class="nav nav-tabs border-0 gap-2">
         @if (ViewBag.AllPeriods != null)
@@ -200,14 +179,12 @@
         }
     </ul>
 </div>
-
 <div class="row mb-4 align-items-center">
     <div class="col-lg-8 d-flex gap-2 flex-wrap">
         <!-- Botón para ver Todos -->
         <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod?.Id" class="btn btn-sm @(ViewBag.SelectedCategory == null ? "btn-primary" : "btn-light border shadow-sm")">
             <i class="bi bi-list-ul me-1"></i> Todos
         </a>
-
         <!-- Botón desplegable exclusivo para LÍNEAS -->
         <div class="dropdown">
             <button class="btn btn-sm btn-light border shadow-sm dropdown-toggle @(listaLineas.Any(l => l.Id == ViewBag.SelectedCategory) ? "btn-primary text-white" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -232,7 +209,6 @@
                 }
             </ul>
         </div>
-
         <!-- Botón desplegable exclusivo para ÁREAS -->
         <div class="dropdown">
             <button class="btn btn-sm btn-light border shadow-sm dropdown-toggle @(listaAreas.Any(a => a.Id == ViewBag.SelectedCategory) ? "btn-primary text-white" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -258,13 +234,11 @@
             </ul>
         </div>
     </div>
-
     <!-- Buscador -->
     <div class="col-lg-4 text-end mt-3 mt-lg-0">
         <input type="text" id="tableSearch" class="form-control border-0 shadow-sm rounded-3 w-100 ms-auto" placeholder="🔍 Buscar por nombre o código...">
     </div>
 </div>
-
 <div class="table-container">
     <div class="table-responsive">
         <table class="table table-hover align-middle text-center">
@@ -285,7 +259,7 @@
                     <th class="text-muted small fw-bold">ACCIONES</th>
                 </tr>
             </thead>
-            <tbody>
+           @*  <tbody>
                 @if (Model.Rows != null && Model.Rows.Any())
                 {
                     foreach (var row in Model.Rows)
@@ -305,7 +279,6 @@
                                     if (status == "PP") cellColor = "#f59e0b";
                                     else if (status == "ISS") cellColor = "#06b6d4";
                                     else if (status == "INC") cellColor = "#ef4444";
-
                                     <td class="attendance-cell py-3"
                                         data-opid="@row.OperatorsId"
                                         data-date="@day.ToString("yyyy-MM-dd")"
@@ -348,18 +321,82 @@
                         </td>
                     </tr>
                 }
+            </tbody> *@
+
+            <tbody>
+                @if (Model.Rows != null && Model.Rows.Any())
+                {
+                    foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td class="small fw-bold text-secondary">@row.Code</td>
+                            <td class="text-start">
+                                <span class="fw-semibold d-block">@row.Name</span>
+                                <span class="text-muted small">@row.CategoryName</span>
+                            </td>
+                            @if (Model.DaysInPeriod != null)
+                            {
+                                foreach (var day in Model.DaysInPeriod)
+                                {
+                                    var status = row.DailyStatus?.FirstOrDefault(x => x.Key.Date == day.Date).Value ?? "X";
+                                    string cellColor = "#cbd5e0";
+                                    if (status == "PP") cellColor = "#f59e0b";
+                                    else if (status == "ISS") cellColor = "#06b6d4";
+                                    else if (status == "INC") cellColor = "#ef4444";
+
+                                    <td class="attendance-cell py-3"
+                                        data-opid="@row.OperatorsId"
+                                        data-date="@day.ToString("yyyy-MM-dd")"
+                                        data-periodid="@Model.CurrentPeriod?.Id"
+                                        onclick="toggleStatus(this)"
+                                        oncontextmenu="handleRightClick(event, this)"
+                                        style="cursor:pointer; font-weight:800; color: @cellColor">
+                                        @status
+                                    </td>
+                                }
+                            }
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li><button class="dropdown-item text-primary small" onclick="openEditOperatorModal(@row.OperatorsId, '@row.Code', '@Html.Raw(JavaScriptEncoder.Default.Encode(row.Name))', '@row.AreaId', '@row.LineaId')"><i class="bi bi-pencil me-2"></i>Editar</button></li>
+                                        <li><button class="dropdown-item text-danger small" onclick="confirmDeleteOperator(@row.OperatorsId, '@Html.Raw(JavaScriptEncoder.Default.Encode(row.Name))')"><i class="bi bi-trash me-2"></i>Eliminar</button></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
             </tbody>
+
+
+
         </table>
     </div>
 </div>
-
 <div id="periodContextMenu" class="context-menu shadow-lg border">
     <div class="item" onclick="openEditPeriodModal()"><i class="bi bi-pencil me-2"></i> Editar nombre</div>
     <div class="item text-danger" onclick="confirmDeletePeriod()"><i class="bi bi-trash me-2"></i> Eliminar periodo</div>
 </div>
-
 @* ==================== MODALES ==================== *@
-
+<div class="modal fade" id="timeModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Horario del Permiso</h5></div>
+            <div class="modal-body">
+                <input type="hidden" id="timeOpId">
+                <input type="hidden" id="timeDate">
+                <label class="small">Hora Inicio:</label>
+                <input type="time" id="startTime" class="form-control">
+                <label class="small mt-2">Hora Fin:</label>
+                <input type="time" id="endTime" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-sm" onclick="saveTime()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
 @* MODAL EDITAR OPERARIO *@
 <div class="modal fade" id="editOperatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -380,7 +417,6 @@
                         <label class="form-label small fw-bold">Nombre Completo</label>
                         <input type="text" id="editOperatorName" name="Name" class="form-control" required />
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Departamento / Área / Puesto</label>
                         <select id="editOperatorArea" name="AreaId" class="form-select">
@@ -391,7 +427,6 @@
                             }
                         </select>
                     </div>
-
                     <div class="mb-3" id="editLineaContainer">
                         <label class="form-label small fw-bold">Línea de Producción</label>
                         <select id="editOperatorLinea" name="LineaId" class="form-select">
@@ -411,7 +446,6 @@
         </div>
     </div>
 </div>
-
 @* MODAL CREAR OPERARIO *@
 <div class="modal fade" id="createOperatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -430,7 +464,6 @@
                         <label class="form-label small fw-bold">Nombre Completo</label>
                         <input type="text" name="Name" class="form-control" required />
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Departamento / Área / Puesto</label>
                         <select id="createOperatorArea" name="AreaId" class="form-select">
@@ -441,7 +474,6 @@
                             }
                         </select>
                     </div>
-
                     <div class="mb-3" id="createLineaContainer" style="display: none;">
                         <label class="form-label small fw-bold">Línea de Producción</label>
                         <select id="createOperatorLinea" name="LineaId" class="form-select">
@@ -461,7 +493,6 @@
         </div>
     </div>
 </div>
-
 @* MODALES DE PERIODOS *@
 <div class="modal fade" id="editPeriodModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -479,7 +510,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="createPeriodModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -497,7 +527,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="statusDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -515,7 +544,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
         window.attendanceData = @Json.Serialize(Model.Rows);
@@ -526,11 +554,8 @@
             const selectArea = document.getElementById(areaSelectId);
             const containerLinea = document.getElementById(lineaContainerId);
             const selectLinea = document.getElementById(lineaSelectId);
-
             if (!selectArea || !containerLinea) return;
-
             const selectedText = selectArea.options[selectArea.selectedIndex]?.text.toLowerCase() || "";
-
             if (selectedText.includes("confección") || selectedText.includes("confeccion")) {
                 containerLinea.style.display = "block";
             } else {
@@ -539,25 +564,16 @@
             }
         }
 
-        document.getElementById('createOperatorArea')?.addEventListener('change', function() {
-            toggleLineaVisibility('createOperatorArea', 'createLineaContainer', 'createOperatorLinea');
-        });
-
-        document.getElementById('editOperatorArea')?.addEventListener('change', function() {
-            toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea');
-        });
-        // --------------------------------------
+        document.getElementById('createOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('createOperatorArea', 'createLineaContainer', 'createOperatorLinea'); });
+        document.getElementById('editOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea'); });
 
         function openEditOperatorModal(id, code, name, areaId, lineaId) {
             document.getElementById('editOperatorId').value = id;
             document.getElementById('editOperatorCode').value = code;
             document.getElementById('editOperatorName').value = name;
-
             document.getElementById('editOperatorArea').value = areaId ? areaId : "";
             document.getElementById('editOperatorLinea').value = lineaId ? lineaId : "";
-
             toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea');
-
             new bootstrap.Modal(document.getElementById('editOperatorModal')).show();
         }
 
@@ -585,38 +601,54 @@
         }
 
         function confirmDeletePeriod() {
-            if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"? Se borrarán todas las asistencias de este periodo.`))
+            if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"?`))
                 window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
         }
 
+        // --- CAMBIO AQUÍ: Clic izquierdo instantáneo ---
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC", "CL"];
+            const colors = {"X": "#cbd5e0", "PP": "#f59e0b", "ISS": "#06b6d4", "INC": "#ef4444", "CL": "#8b5cf6"};
+
             let current = cell.innerText.trim();
             let next = states[(states.indexOf(current) + 1) % states.length];
 
-            // Asegúrate de que esta ruta apunte al controlador correcto.
-            // Actualmente apunta a /Operators/UpdateAttendance
+            // Petición al servidor (sin recargar)
             $.post('/Operators/UpdateAttendance', {
                 operatorId: cell.dataset.opid,
                 date: cell.dataset.date,
                 status: next,
                 periodId: cell.dataset.periodid
             }).done(() => {
+                // Actualización visual instantánea
                 cell.innerText = next;
+                cell.style.color = colors[next];
+            });
+        }
 
-                if(next === "X") cell.style.color = "#cbd5e0";
-                else if(next === "PP") cell.style.color = "#f59e0b";
-                else if(next === "ISS") cell.style.color = "#06b6d4";
-                else if(next === "INC") cell.style.color = "#ef4444";
-                else cell.style.color = "#6c757d";
+        // --- CAMBIO AQUÍ: Clic derecho modal ---
+        function handleRightClick(event, cell) {
+            event.preventDefault();
+            let status = cell.innerText.trim();
+            if (status !== "X") {
+                document.getElementById('timeOpId').value = cell.dataset.opid;
+                document.getElementById('timeDate').value = cell.dataset.date;
+                document.getElementById('timeModal').dataset.nextStatus = status;
+                new bootstrap.Modal(document.getElementById('timeModal')).show();
+            }
+        }
 
-                if(window.attendanceData) {
-                    const op = window.attendanceData.find(o => o.operatorsId == cell.dataset.opid);
-                    if(op && op.dailyStatus) {
-                        const targetKey = Object.keys(op.dailyStatus).find(k => k.startsWith(cell.dataset.date));
-                        if(targetKey) op.dailyStatus[targetKey] = next;
-                    }
-                }
+        function saveTime() {
+            $.post('/Operators/UpdateAttendance', {
+                operatorId: document.getElementById('timeOpId').value,
+                date: document.getElementById('timeDate').value,
+                status: document.getElementById('timeModal').dataset.nextStatus,
+                periodId: '@Model.CurrentPeriod?.Id',
+                start: document.getElementById('startTime').value,
+                end: document.getElementById('endTime').value
+            }).done(() => {
+                bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
+                // Opcional: mostrar notificación de guardado
             });
         }
 
@@ -630,10 +662,8 @@
         function confirmDeleteOperator(id, name) {
             if (confirm(`¿Está seguro de eliminar al operario "${name}"?`)) {
                 const form = document.createElement('form');
-                form.method = 'post';
-                form.action = `/Operators/DeleteConfirmed/${id}`; // Asegúrate que la ruta sea correcta
-                document.body.appendChild(form);
-                form.submit();
+                form.method = 'post'; form.action = `/Operators/DeleteConfirmed/${id}`;
+                document.body.appendChild(form); form.submit();
             }
         }
 
@@ -641,71 +671,55 @@
             const listContainer = document.getElementById('statusDetailsList');
             const emptyMsg = document.getElementById('emptyStatusMsg');
             const modalHeader = document.getElementById('statusModalHeader');
-
             listContainer.innerHTML = '';
             document.getElementById('statusModalTitle').innerText = title;
             modalHeader.className = 'modal-header text-white ' + headerClass;
 
             let foundCount = 0;
-
             if (!window.attendanceData || window.attendanceData.length === 0) {
-                emptyMsg.classList.remove('d-none');
-                listContainer.classList.add('d-none');
+                emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
                 new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
                 return;
             }
 
             window.attendanceData.forEach(row => {
                 let userDates = [];
-
                 if (row.dailyStatus) {
                     Object.keys(row.dailyStatus).forEach(dateKey => {
                         if (row.dailyStatus[dateKey] === statusCode) {
                             const rawDate = dateKey.split('T')[0];
                             const parts = rawDate.split('-');
-
                             if(parts.length === 3) {
                                 const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                                const formattedDate = dateObj.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short'
-                                });
+                                const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
                                 userDates.push(formattedDate);
                             }
                         }
                     });
                 }
-
                 if (userDates.length > 0) {
                     userDates.sort((a, b) => a.localeCompare(b));
                     const daysText = userDates.join(', ');
-
-                    const item = `
-                        <div class="list-group-item p-3 border-bottom">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div style="max-width: 75%;">
-                                    <h6 class="mb-1 fw-bold text-dark">${row.name}</h6>
-                                    <p class="mb-1 small text-secondary"><strong>Días:</strong> ${daysText}</p>
-                                    <small class="text-muted d-block" style="font-size:0.75rem;">${row.code} | ${row.categoryName || 'Sin Área'}</small>
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge rounded-pill ${headerClass} d-block mb-1">${statusCode}</span>
-                                    <span class="badge bg-light text-dark border fw-bold d-block">Total: ${userDates.length} d</span>
-                                </div>
-                            </div>
-                        </div>`;
-
+                    const item = `<div class="list-group-item p-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div style="max-width: 75%;">
+                                            <h6 class="mb-1 fw-bold text-dark">${row.name}</h6>
+                                            <p class="mb-1 small text-secondary"><strong>Días:</strong> ${daysText}</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge rounded-pill ${headerClass} d-block mb-1">${statusCode}</span>
+                                        </div>
+                                    </div>
+                                  </div>`;
                     listContainer.innerHTML += item;
                     foundCount++;
                 }
             });
 
             if (foundCount === 0) {
-                emptyMsg.classList.remove('d-none');
-                listContainer.classList.add('d-none');
+                emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
             } else {
-                emptyMsg.className = 'p-4 text-center d-none';
-                listContainer.classList.remove('d-none');
+                emptyMsg.className = 'p-4 text-center d-none'; listContainer.classList.remove('d-none');
             }
             new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
         }
