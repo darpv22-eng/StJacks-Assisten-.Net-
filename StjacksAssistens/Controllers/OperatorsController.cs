@@ -274,59 +274,43 @@ namespace StjacksAssistens.Controllers
         // =========================================================================
         // ACCIÓN AJAX: CAMBIAR ESTADO DE ASISTENCIA (Toggle en la cuadrícula)
         // =========================================================================
-        //[HttpPost]
-        //public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId)
-        //{
-        //    var attendanceDate = DateTime.Parse(date).Date;
-        //    var attendance = await _context.Set<Attendence>()
-        //        .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate && a.PeriodId == periodId);
-
-        //    if (attendance == null)
-        //    {
-        //        attendance = new Attendence
-        //        {
-        //            OperatorsId = operatorId,
-        //            AttendanceDate = attendanceDate,
-        //            Status = status,
-        //            PeriodId = periodId
-        //        };
-        //        _context.Set<Attendence>().Add(attendance);
-        //    }
-        //    else
-        //    {
-        //        attendance.Status = status;
-        //        _context.Update(attendance);
-        //    }
-
-        //    await _context.SaveChangesAsync();
-        //    return Json(new { success = true });
-        //}
         [HttpPost]
-        public async Task<IActionResult> UpdateAttendance(int operatorId, string date, string status, int periodId, string start = null, string end = null)
+        public async Task<IActionResult> UpdateAttendance(int operatorId, DateTime date, string status, int periodId, string? start, string? end)
         {
-            var attendanceDate = DateTime.Parse(date).Date;
-            var attendance = await _context.Set<Attendence>()
-                .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == attendanceDate && a.PeriodId == periodId);
+            // 1. Busca el registro usando el nombre correcto de la propiedad: OperatorsId
+            var attendance = await _context.Attendence
+                .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == date.Date && a.PeriodId == periodId);
 
             if (attendance == null)
             {
-                attendance = new Attendence { OperatorsId = operatorId, AttendanceDate = attendanceDate, Status = status, PeriodId = periodId };
-                _context.Set<Attendence>().Add(attendance);
+                // Si no existe, créalo
+                attendance = new Attendence
+                {
+                    OperatorsId = operatorId, // También aquí
+                    AttendanceDate = date,
+                    PeriodId = periodId,
+                    Status = status
+                };
+                _context.Attendence.Add(attendance);
             }
             else
             {
                 attendance.Status = status;
             }
 
-            // Guardar horas si no es "X"
-            if (status != "X" && !string.IsNullOrEmpty(start) && !string.IsNullOrEmpty(end))
+            // El resto de tu lógica se mantiene igual
+            if (!string.IsNullOrEmpty(start)) attendance.StartTime = TimeSpan.Parse(start);
+            if (!string.IsNullOrEmpty(end)) attendance.EndTime = TimeSpan.Parse(end);
+
+            if (attendance.StartTime.HasValue && attendance.EndTime.HasValue)
             {
-                attendance.StartTime = TimeSpan.Parse(start);
-                attendance.EndTime = TimeSpan.Parse(end);
+                var diff = attendance.EndTime.Value - attendance.StartTime.Value;
+                attendance.Hours = (int)diff.TotalHours;
+                attendance.Minutes = diff.Minutes;
             }
 
             await _context.SaveChangesAsync();
-            return Json(new { success = true });
+            return Ok();
         }
         // =========================================================================
         // PROCESAR MODALES: ACCIONES COMPLEMENTARIAS DE PERIODOS (Crear, Editar, Borrar)

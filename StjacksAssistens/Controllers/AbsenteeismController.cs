@@ -168,7 +168,6 @@ namespace StjacksAssistens.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-
         private SemanaDetalle GenerarDetalleSemana(IEnumerable<Attendence> asistencias)
         {
             var detalle = new SemanaDetalle();
@@ -191,8 +190,6 @@ namespace StjacksAssistens.Controllers
             detalle.Motivo = !string.IsNullOrEmpty(obsBD) ? obsBD : string.Join(", ", faltas);
             return detalle;
         }
-
-
         #region REPORTE MECÁNICOS
         public async Task<IActionResult> ReporteMecanicos(int? periodId)
         {
@@ -546,5 +543,59 @@ namespace StjacksAssistens.Controllers
         }
 
         #endregion
+
+
+        public async Task<IActionResult> SábanaConsolidada(int? periodId)
+        {
+            var periodo = periodId.HasValue
+                ? await _context.Set<Periodss>().FindAsync(periodId)
+                : await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
+
+            if (periodo == null) return NotFound();
+
+            // Traemos asistencias con los datos del operador y su línea
+            var asistencias = await _context.Set<Attendence>()
+                .Include(a => a.Operator).ThenInclude(o => o.Linea)
+                .Where(a => a.PeriodId == periodo.Id)
+                .ToListAsync();
+
+            // Lista fija de tus 9 líneas
+            var lineas = new[] { "21", "23", "25", "26", "32", "35", "36", "37", "38" };
+
+            var consolidado = new List<AusentismoConsolidadoViewModel>();
+
+            // Generar la matriz por fecha y línea
+            var fechas = asistencias.Select(a => a.AttendanceDate.Date).Distinct().OrderBy(d => d);
+
+            foreach (var fecha in fechas)
+            {
+                foreach (var linea in lineas)
+                {
+                    var att = asistencias.FirstOrDefault(a => a.AttendanceDate.Date == fecha.Date && a.Operator.Linea.Name.Contains(linea));
+
+                    // Lógica de cálculo basada en tu Excel
+                    double inc = (att?.Status == "INC") ? 8.5 : 0;
+                    double per = (att?.Status == "PP") ? (att.Hours + (att.Minutes / 60.0)) ?? 0 : 0;
+                    double cli = (att?.Status == "CLINICA") ? (att.Hours + (att.Minutes / 60.0)) ?? 0 : 0;
+                    double iss = (att?.Status == "ISSS") ? (att.Hours + (att.Minutes / 60.0)) ?? 0 : 0;
+
+                    double totalHoras = inc + per + cli + iss;
+
+                    consolidado.Add(new AusentismoConsolidadoViewModel
+                    {
+                        Fecha = fecha,
+                        Linea = linea,
+                        Incapacidad = inc,
+                        PermisoPersonal = per,
+                        Clinica = cli,
+                        ISSS = iss,
+                        TotalMinutos = totalHoras * 60,
+                        ModaParcial = (totalHoras > 0) ? 1 : 0,
+                        ModaTotal = (totalHoras > 0) ? (totalHoras / 8.5) : 0
+                    });
+                }
+            }
+            return View(consolidado);
+        }
     }
 }

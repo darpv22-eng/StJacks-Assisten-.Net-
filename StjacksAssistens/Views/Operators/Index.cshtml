@@ -181,11 +181,9 @@
 </div>
 <div class="row mb-4 align-items-center">
     <div class="col-lg-8 d-flex gap-2 flex-wrap">
-        <!-- Botón para ver Todos -->
         <a asp-action="Index" asp-route-periodId="@Model.CurrentPeriod?.Id" class="btn btn-sm @(ViewBag.SelectedCategory == null ? "btn-primary" : "btn-light border shadow-sm")">
             <i class="bi bi-list-ul me-1"></i> Todos
         </a>
-        <!-- Botón desplegable exclusivo para LÍNEAS -->
         <div class="dropdown">
             <button class="btn btn-sm btn-light border shadow-sm dropdown-toggle @(listaLineas.Any(l => l.Id == ViewBag.SelectedCategory) ? "btn-primary text-white" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-diagram-3 me-1"></i> Filtrar por Línea
@@ -209,7 +207,6 @@
                 }
             </ul>
         </div>
-        <!-- Botón desplegable exclusivo para ÁREAS -->
         <div class="dropdown">
             <button class="btn btn-sm btn-light border shadow-sm dropdown-toggle @(listaAreas.Any(a => a.Id == ViewBag.SelectedCategory) ? "btn-primary text-white" : "")" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-tags me-1"></i> Filtrar por Área
@@ -234,7 +231,6 @@
             </ul>
         </div>
     </div>
-    <!-- Buscador -->
     <div class="col-lg-4 text-end mt-3 mt-lg-0">
         <input type="text" id="tableSearch" class="form-control border-0 shadow-sm rounded-3 w-100 ms-auto" placeholder="🔍 Buscar por nombre o código...">
     </div>
@@ -259,70 +255,6 @@
                     <th class="text-muted small fw-bold">ACCIONES</th>
                 </tr>
             </thead>
-           @*  <tbody>
-                @if (Model.Rows != null && Model.Rows.Any())
-                {
-                    foreach (var row in Model.Rows)
-                    {
-                        <tr>
-                            <td class="small fw-bold text-secondary">@row.Code</td>
-                            <td class="text-start">
-                                <span class="fw-semibold d-block">@row.Name</span>
-                                <span class="text-muted small">@row.CategoryName</span>
-                            </td>
-                            @if (Model.DaysInPeriod != null)
-                            {
-                                foreach (var day in Model.DaysInPeriod)
-                                {
-                                    var status = row.DailyStatus?.FirstOrDefault(x => x.Key.Date == day.Date).Value ?? "X";
-                                    string cellColor = "#cbd5e0";
-                                    if (status == "PP") cellColor = "#f59e0b";
-                                    else if (status == "ISS") cellColor = "#06b6d4";
-                                    else if (status == "INC") cellColor = "#ef4444";
-                                    <td class="attendance-cell py-3"
-                                        data-opid="@row.OperatorsId"
-                                        data-date="@day.ToString("yyyy-MM-dd")"
-                                        data-periodid="@Model.CurrentPeriod?.Id"
-                                        onclick="toggleStatus(this)"
-                                        style="cursor:pointer; font-weight:800; color: @cellColor">
-                                        @status
-                                    </td>
-                                }
-                            }
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                        <li>
-                                            <button class="dropdown-item text-primary small"
-                                                    onclick="openEditOperatorModal(@row.OperatorsId, '@row.Code', '@Html.Raw(JavaScriptEncoder.Default.Encode(row.Name))', '@row.AreaId', '@row.LineaId')">
-                                                <i class="bi bi-pencil me-2"></i>Editar
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item text-danger small"
-                                                    onclick="confirmDeleteOperator(@row.OperatorsId, '@Html.Raw(JavaScriptEncoder.Default.Encode(row.Name))')">
-                                                <i class="bi bi-trash me-2"></i>Eliminar
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="30" class="text-center py-4 text-muted">
-                            <i class="bi bi-info-circle me-1"></i> No hay operarios registrados o asignados a esta categoría.
-                        </td>
-                    </tr>
-                }
-            </tbody> *@
-
             <tbody>
                 @if (Model.Rows != null && Model.Rows.Any())
                 {
@@ -343,7 +275,6 @@
                                     if (status == "PP") cellColor = "#f59e0b";
                                     else if (status == "ISS") cellColor = "#06b6d4";
                                     else if (status == "INC") cellColor = "#ef4444";
-
                                     <td class="attendance-cell py-3"
                                         data-opid="@row.OperatorsId"
                                         data-date="@day.ToString("yyyy-MM-dd")"
@@ -368,9 +299,6 @@
                     }
                 }
             </tbody>
-
-
-
         </table>
     </div>
 </div>
@@ -378,7 +306,6 @@
     <div class="item" onclick="openEditPeriodModal()"><i class="bi bi-pencil me-2"></i> Editar nombre</div>
     <div class="item text-danger" onclick="confirmDeletePeriod()"><i class="bi bi-trash me-2"></i> Eliminar periodo</div>
 </div>
-@* ==================== MODALES ==================== *@
 <div class="modal fade" id="timeModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
@@ -397,7 +324,6 @@
         </div>
     </div>
 </div>
-@* MODAL EDITAR OPERARIO *@
 <div class="modal fade" id="editOperatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -408,7 +334,6 @@
             <form asp-action="Edit" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="editOperatorId" name="OperatorsId" />
-
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Código</label>
                         <input type="text" id="editOperatorCode" name="Code" class="form-control" required />
@@ -446,7 +371,6 @@
         </div>
     </div>
 </div>
-@* MODAL CREAR OPERARIO *@
 <div class="modal fade" id="createOperatorModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -493,7 +417,6 @@
         </div>
     </div>
 </div>
-@* MODALES DE PERIODOS *@
 <div class="modal fade" id="editPeriodModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -548,8 +471,6 @@
     <script>
         window.attendanceData = @Json.Serialize(Model.Rows);
         let selectedPeriodId = null, selectedPeriodName = "";
-
-        // --- LÓGICA DE VISIBILIDAD DE LÍNEA ---
         function toggleLineaVisibility(areaSelectId, lineaContainerId, lineaSelectId) {
             const selectArea = document.getElementById(areaSelectId);
             const containerLinea = document.getElementById(lineaContainerId);
@@ -563,10 +484,8 @@
                 selectLinea.value = "";
             }
         }
-
         document.getElementById('createOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('createOperatorArea', 'createLineaContainer', 'createOperatorLinea'); });
         document.getElementById('editOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea'); });
-
         function openEditOperatorModal(id, code, name, areaId, lineaId) {
             document.getElementById('editOperatorId').value = id;
             document.getElementById('editOperatorCode').value = code;
@@ -576,7 +495,6 @@
             toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea');
             new bootstrap.Modal(document.getElementById('editOperatorModal')).show();
         }
-
         document.addEventListener('contextmenu', e => {
             const tab = e.target.closest('.period-tab');
             if (tab) {
@@ -588,45 +506,35 @@
                 menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
             }
         });
-
         document.addEventListener('click', () => {
             const menu = document.getElementById('periodContextMenu');
             if(menu) menu.style.display = 'none';
         });
-
         function openEditPeriodModal() {
             document.getElementById('editPeriodId').value = selectedPeriodId;
             document.getElementById('editPeriodDescription').value = selectedPeriodName;
             new bootstrap.Modal(document.getElementById('editPeriodModal')).show();
         }
-
         function confirmDeletePeriod() {
             if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"?`))
                 window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
         }
-
-        // --- CAMBIO AQUÍ: Clic izquierdo instantáneo ---
         function toggleStatus(cell) {
             const states = ["X", "PP", "ISS", "INC", "CL"];
             const colors = {"X": "#cbd5e0", "PP": "#f59e0b", "ISS": "#06b6d4", "INC": "#ef4444", "CL": "#8b5cf6"};
 
             let current = cell.innerText.trim();
             let next = states[(states.indexOf(current) + 1) % states.length];
-
-            // Petición al servidor (sin recargar)
             $.post('/Operators/UpdateAttendance', {
                 operatorId: cell.dataset.opid,
                 date: cell.dataset.date,
                 status: next,
                 periodId: cell.dataset.periodid
             }).done(() => {
-                // Actualización visual instantánea
                 cell.innerText = next;
                 cell.style.color = colors[next];
             });
         }
-
-        // --- CAMBIO AQUÍ: Clic derecho modal ---
         function handleRightClick(event, cell) {
             event.preventDefault();
             let status = cell.innerText.trim();
@@ -637,7 +545,6 @@
                 new bootstrap.Modal(document.getElementById('timeModal')).show();
             }
         }
-
         function saveTime() {
             $.post('/Operators/UpdateAttendance', {
                 operatorId: document.getElementById('timeOpId').value,
@@ -648,17 +555,14 @@
                 end: document.getElementById('endTime').value
             }).done(() => {
                 bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
-                // Opcional: mostrar notificación de guardado
             });
         }
-
         document.getElementById('tableSearch').addEventListener('keyup', function() {
             let val = this.value.toLowerCase();
             document.querySelectorAll('tbody tr').forEach(tr => {
                 tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
             });
         });
-
         function confirmDeleteOperator(id, name) {
             if (confirm(`¿Está seguro de eliminar al operario "${name}"?`)) {
                 const form = document.createElement('form');
@@ -666,7 +570,6 @@
                 document.body.appendChild(form); form.submit();
             }
         }
-
         function showStatusDetails(statusCode, title, headerClass) {
             const listContainer = document.getElementById('statusDetailsList');
             const emptyMsg = document.getElementById('emptyStatusMsg');
@@ -674,14 +577,12 @@
             listContainer.innerHTML = '';
             document.getElementById('statusModalTitle').innerText = title;
             modalHeader.className = 'modal-header text-white ' + headerClass;
-
             let foundCount = 0;
             if (!window.attendanceData || window.attendanceData.length === 0) {
                 emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
                 new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
                 return;
             }
-
             window.attendanceData.forEach(row => {
                 let userDates = [];
                 if (row.dailyStatus) {
@@ -715,7 +616,6 @@
                     foundCount++;
                 }
             });
-
             if (foundCount === 0) {
                 emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
             } else {
