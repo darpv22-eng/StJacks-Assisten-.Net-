@@ -187,6 +187,19 @@ namespace StjacksAssistens.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var operatorToDelete = await _context.Operators.FindAsync(id);
+            if (operatorToDelete != null)
+            {
+                _context.Operators.Remove(operatorToDelete);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
         // =========================================================================
         // VISTA / REPORTE: AUSENTISMO DE OPERARIOS
         // =========================================================================

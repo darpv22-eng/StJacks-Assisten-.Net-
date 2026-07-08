@@ -371,257 +371,269 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="createOperatorModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title">Registrar Nuevo Operario</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form asp-action="Create" method="post">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Código</label>
-                        <input type="text" name="Code" class="form-control" placeholder="Ej: 1245" required />
+    <div class="modal fade" id="createOperatorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Registrar Nuevo Operario</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-action="Create" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Código</label>
+                            <input type="text" name="Code" class="form-control" placeholder="Ej: 1245" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nombre Completo</label>
+                            <input type="text" name="Name" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Departamento / Área / Puesto</label>
+                            <select id="createOperatorArea" name="AreaId" class="form-select">
+                                <option value="">-- Seleccione Área o Puesto --</option>
+                                @foreach (var item in listaAreas)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3" id="createLineaContainer" style="display: none;">
+                            <label class="form-label small fw-bold">Línea de Producción</label>
+                            <select id="createOperatorLinea" name="LineaId" class="form-select">
+                                <option value="">-- Seleccione Número de Línea (Opcional) --</option>
+                                @foreach (var item in listaLineas)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nombre Completo</label>
-                        <input type="text" name="Name" class="form-control" required />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4">Guardar Operario</button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Departamento / Área / Puesto</label>
-                        <select id="createOperatorArea" name="AreaId" class="form-select">
-                            <option value="">-- Seleccione Área o Puesto --</option>
-                            @foreach (var item in listaAreas)
-                            {
-                                <option value="@item.Id">@item.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3" id="createLineaContainer" style="display: none;">
-                        <label class="form-label small fw-bold">Línea de Producción</label>
-                        <select id="createOperatorLinea" name="LineaId" class="form-select">
-                            <option value="">-- Seleccione Número de Línea (Opcional) --</option>
-                            @foreach (var item in listaLineas)
-                            {
-                                <option value="@item.Id">@item.Name</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary px-4">Guardar Operario</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="editPeriodModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form asp-action="EditPeriod" method="post">
-                <div class="modal-body">
-                    <input type="hidden" id="editPeriodId" name="id" />
-                    <label class="form-label fw-bold">Nueva Descripción</label>
-                    <input type="text" class="form-control" id="editPeriodDescription" name="Description" required />
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="createPeriodModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white"><h5>Nuevo Periodo</h5></div>
-            <form asp-action="CreatePeriod" method="post">
-                <div class="modal-body">
-                    <div class="mb-3"><label>Descripción</label><input type="text" name="Description" class="form-control" required /></div>
-                    <div class="row">
-                        <div class="col-6"><label>Inicio</label><input type="date" name="StartDate" class="form-control" required /></div>
-                        <div class="col-6"><label>Fin</label><input type="date" name="EndDate" class="form-control" required /></div>
-                    </div>
-                </div>
-                <div class="modal-footer"><button type="submit" class="btn btn-primary">Crear</button></div>
-            </form>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="statusDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div id="statusModalHeader" class="modal-header text-white">
-                <h5 class="modal-title fw-bold" id="statusModalTitle">Listado de Personal</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="list-group list-group-flush" id="statusDetailsList"></div>
-                <div id="emptyStatusMsg" class="p-4 text-center d-none">
-                    <i class="bi bi-info-circle fs-2 text-muted"></i>
-                    <p class="text-muted mt-2">No hay operarios en este estado hoy.</p>
-                </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
-@section Scripts {
-    <script>
-        window.attendanceData = @Json.Serialize(Model.Rows);
-        let selectedPeriodId = null, selectedPeriodName = "";
-        function toggleLineaVisibility(areaSelectId, lineaContainerId, lineaSelectId) {
-            const selectArea = document.getElementById(areaSelectId);
-            const containerLinea = document.getElementById(lineaContainerId);
-            const selectLinea = document.getElementById(lineaSelectId);
-            if (!selectArea || !containerLinea) return;
-            const selectedText = selectArea.options[selectArea.selectedIndex]?.text.toLowerCase() || "";
-            if (selectedText.includes("confección") || selectedText.includes("confeccion")) {
-                containerLinea.style.display = "block";
-            } else {
-                containerLinea.style.display = "none";
-                selectLinea.value = "";
+    <div class="modal fade" id="editPeriodModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="EditPeriod" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="editPeriodId" name="id" />
+                        <label class="form-label fw-bold">Nueva Descripción</label>
+                        <input type="text" class="form-control" id="editPeriodDescription" name="Description" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="createPeriodModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5>Nuevo Periodo</h5></div>
+                <form asp-action="CreatePeriod" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3"><label>Descripción</label><input type="text" name="Description" class="form-control" required /></div>
+                        <div class="row">
+                            <div class="col-6"><label>Inicio</label><input type="date" name="StartDate" class="form-control" required /></div>
+                            <div class="col-6"><label>Fin</label><input type="date" name="EndDate" class="form-control" required /></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Crear</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="statusDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div id="statusModalHeader" class="modal-header text-white">
+                    <h5 class="modal-title fw-bold" id="statusModalTitle">Listado de Personal</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="list-group list-group-flush" id="statusDetailsList"></div>
+                    <div id="emptyStatusMsg" class="p-4 text-center d-none">
+                        <i class="bi bi-info-circle fs-2 text-muted"></i>
+                        <p class="text-muted mt-2">No hay operarios en este estado hoy.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @section Scripts {
+        <script>
+            window.attendanceData = @Json.Serialize(Model.Rows);
+            let selectedPeriodId = null, selectedPeriodName = "";
+            function toggleLineaVisibility(areaSelectId, lineaContainerId, lineaSelectId) {
+                const selectArea = document.getElementById(areaSelectId);
+                const containerLinea = document.getElementById(lineaContainerId);
+                const selectLinea = document.getElementById(lineaSelectId);
+                if (!selectArea || !containerLinea) return;
+                const selectedText = selectArea.options[selectArea.selectedIndex]?.text.toLowerCase() || "";
+                if (selectedText.includes("confección") || selectedText.includes("confeccion")) {
+                    containerLinea.style.display = "block";
+                } else {
+                    containerLinea.style.display = "none";
+                    selectLinea.value = "";
+                }
             }
-        }
-        document.getElementById('createOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('createOperatorArea', 'createLineaContainer', 'createOperatorLinea'); });
-        document.getElementById('editOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea'); });
-        function openEditOperatorModal(id, code, name, areaId, lineaId) {
-            document.getElementById('editOperatorId').value = id;
-            document.getElementById('editOperatorCode').value = code;
-            document.getElementById('editOperatorName').value = name;
-            document.getElementById('editOperatorArea').value = areaId ? areaId : "";
-            document.getElementById('editOperatorLinea').value = lineaId ? lineaId : "";
-            toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea');
-            new bootstrap.Modal(document.getElementById('editOperatorModal')).show();
-        }
-        document.addEventListener('contextmenu', e => {
-            const tab = e.target.closest('.period-tab');
-            if (tab) {
-                e.preventDefault();
-                selectedPeriodId = tab.dataset.periodId;
-                selectedPeriodName = tab.dataset.periodName;
+            document.getElementById('createOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('createOperatorArea', 'createLineaContainer', 'createOperatorLinea'); });
+            document.getElementById('editOperatorArea')?.addEventListener('change', function() { toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea'); });
+            function openEditOperatorModal(id, code, name, areaId, lineaId) {
+                document.getElementById('editOperatorId').value = id;
+                document.getElementById('editOperatorCode').value = code;
+                document.getElementById('editOperatorName').value = name;
+                document.getElementById('editOperatorArea').value = areaId ? areaId : "";
+                document.getElementById('editOperatorLinea').value = lineaId ? lineaId : "";
+                toggleLineaVisibility('editOperatorArea', 'editLineaContainer', 'editOperatorLinea');
+                new bootstrap.Modal(document.getElementById('editOperatorModal')).show();
+            }
+            document.addEventListener('contextmenu', e => {
+                const tab = e.target.closest('.period-tab');
+                if (tab) {
+                    e.preventDefault();
+                    selectedPeriodId = tab.dataset.periodId;
+                    selectedPeriodName = tab.dataset.periodName;
+                    const menu = document.getElementById('periodContextMenu');
+                    menu.style.display = 'block';
+                    menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+                }
+            });
+            document.addEventListener('click', () => {
                 const menu = document.getElementById('periodContextMenu');
-                menu.style.display = 'block';
-                menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+                if(menu) menu.style.display = 'none';
+            });
+            function openEditPeriodModal() {
+                document.getElementById('editPeriodId').value = selectedPeriodId;
+                document.getElementById('editPeriodDescription').value = selectedPeriodName;
+                new bootstrap.Modal(document.getElementById('editPeriodModal')).show();
             }
-        });
-        document.addEventListener('click', () => {
-            const menu = document.getElementById('periodContextMenu');
-            if(menu) menu.style.display = 'none';
-        });
-        function openEditPeriodModal() {
-            document.getElementById('editPeriodId').value = selectedPeriodId;
-            document.getElementById('editPeriodDescription').value = selectedPeriodName;
-            new bootstrap.Modal(document.getElementById('editPeriodModal')).show();
-        }
-        function confirmDeletePeriod() {
-            if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"?`))
-                window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
-        }
-        function toggleStatus(cell) {
-            const states = ["X", "PP", "ISS", "INC", "CL"];
-            const colors = {"X": "#cbd5e0", "PP": "#f59e0b", "ISS": "#06b6d4", "INC": "#ef4444", "CL": "#8b5cf6"};
+            function confirmDeletePeriod() {
+                if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"?`))
+                    window.location.href = `/Operators/DeletePeriod/${selectedPeriodId}`;
+            }
+            function toggleStatus(cell) {
+                const states = ["X", "PP", "ISS", "INC", "CL"];
+                const colors = {"X": "#cbd5e0", "PP": "#f59e0b", "ISS": "#06b6d4", "INC": "#ef4444", "CL": "#8b5cf6"};
 
-            let current = cell.innerText.trim();
-            let next = states[(states.indexOf(current) + 1) % states.length];
-            $.post('/Operators/UpdateAttendance', {
-                operatorId: cell.dataset.opid,
-                date: cell.dataset.date,
-                status: next,
-                periodId: cell.dataset.periodid
-            }).done(() => {
-                cell.innerText = next;
-                cell.style.color = colors[next];
-            });
-        }
-        function handleRightClick(event, cell) {
-            event.preventDefault();
-            let status = cell.innerText.trim();
-            if (status !== "X") {
-                document.getElementById('timeOpId').value = cell.dataset.opid;
-                document.getElementById('timeDate').value = cell.dataset.date;
-                document.getElementById('timeModal').dataset.nextStatus = status;
-                new bootstrap.Modal(document.getElementById('timeModal')).show();
+                let current = cell.innerText.trim();
+                let next = states[(states.indexOf(current) + 1) % states.length];
+                $.post('/Operators/UpdateAttendance', {
+                    operatorId: cell.dataset.opid,
+                    date: cell.dataset.date,
+                    status: next,
+                    periodId: cell.dataset.periodid
+                }).done(() => {
+                    cell.innerText = next;
+                    cell.style.color = colors[next];
+                });
             }
-        }
-        function saveTime() {
-            $.post('/Operators/UpdateAttendance', {
-                operatorId: document.getElementById('timeOpId').value,
-                date: document.getElementById('timeDate').value,
-                status: document.getElementById('timeModal').dataset.nextStatus,
-                periodId: '@Model.CurrentPeriod?.Id',
-                start: document.getElementById('startTime').value,
-                end: document.getElementById('endTime').value
-            }).done(() => {
-                bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
+            function handleRightClick(event, cell) {
+                event.preventDefault();
+                let status = cell.innerText.trim();
+                if (status !== "X") {
+                    document.getElementById('timeOpId').value = cell.dataset.opid;
+                    document.getElementById('timeDate').value = cell.dataset.date;
+                    document.getElementById('timeModal').dataset.nextStatus = status;
+                    new bootstrap.Modal(document.getElementById('timeModal')).show();
+                }
+            }
+            function saveTime() {
+                $.post('/Operators/UpdateAttendance', {
+                    operatorId: document.getElementById('timeOpId').value,
+                    date: document.getElementById('timeDate').value,
+                    status: document.getElementById('timeModal').dataset.nextStatus,
+                    periodId: '@Model.CurrentPeriod?.Id',
+                    start: document.getElementById('startTime').value,
+                    end: document.getElementById('endTime').value
+                }).done(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
+                });
+            }
+            document.getElementById('tableSearch').addEventListener('keyup', function() {
+                let val = this.value.toLowerCase();
+                document.querySelectorAll('tbody tr').forEach(tr => {
+                    tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
+                });
             });
-        }
-        document.getElementById('tableSearch').addEventListener('keyup', function() {
-            let val = this.value.toLowerCase();
-            document.querySelectorAll('tbody tr').forEach(tr => {
-                tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
-            });
-        });
-        function confirmDeleteOperator(id, name) {
+                  function confirmDeleteOperator(id, name) {
             if (confirm(`¿Está seguro de eliminar al operario "${name}"?`)) {
-                const form = document.createElement('form');
-                form.method = 'post'; form.action = `/Operators/DeleteConfirmed/${id}`;
-                document.body.appendChild(form); form.submit();
+                // Obtenemos el token que ya existe en tu página (necesario para POST)
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch(`/Operators/DeleteConfirmed/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.reload(); // Recarga para ver el cambio
+                    } else {
+                        alert("Error al intentar eliminar. Verifica que la acción exista en el controlador.");
+                    }
+                });
             }
         }
-        function showStatusDetails(statusCode, title, headerClass) {
-            const listContainer = document.getElementById('statusDetailsList');
-            const emptyMsg = document.getElementById('emptyStatusMsg');
-            const modalHeader = document.getElementById('statusModalHeader');
-            listContainer.innerHTML = '';
-            document.getElementById('statusModalTitle').innerText = title;
-            modalHeader.className = 'modal-header text-white ' + headerClass;
-            let foundCount = 0;
-            if (!window.attendanceData || window.attendanceData.length === 0) {
-                emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
-                new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
-                return;
-            }
-            window.attendanceData.forEach(row => {
-                let userDates = [];
-                if (row.dailyStatus) {
-                    Object.keys(row.dailyStatus).forEach(dateKey => {
-                        if (row.dailyStatus[dateKey] === statusCode) {
-                            const rawDate = dateKey.split('T')[0];
-                            const parts = rawDate.split('-');
-                            if(parts.length === 3) {
-                                const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                                const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-                                userDates.push(formattedDate);
+            function showStatusDetails(statusCode, title, headerClass) {
+                const listContainer = document.getElementById('statusDetailsList');
+                const emptyMsg = document.getElementById('emptyStatusMsg');
+                const modalHeader = document.getElementById('statusModalHeader');
+                listContainer.innerHTML = '';
+                document.getElementById('statusModalTitle').innerText = title;
+                modalHeader.className = 'modal-header text-white ' + headerClass;
+                let foundCount = 0;
+                if (!window.attendanceData || window.attendanceData.length === 0) {
+                    emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
+                    new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
+                    return;
+                }
+                window.attendanceData.forEach(row => {
+                    let userDates = [];
+                    if (row.dailyStatus) {
+                        Object.keys(row.dailyStatus).forEach(dateKey => {
+                            if (row.dailyStatus[dateKey] === statusCode) {
+                                const rawDate = dateKey.split('T')[0];
+                                const parts = rawDate.split('-');
+                                if(parts.length === 3) {
+                                    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                                    const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                                    userDates.push(formattedDate);
+                                }
                             }
-                        }
-                    });
-                }
-                if (userDates.length > 0) {
-                    userDates.sort((a, b) => a.localeCompare(b));
-                    const daysText = userDates.join(', ');
-                    const item = `<div class="list-group-item p-3 border-bottom">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div style="max-width: 75%;">
-                                            <h6 class="mb-1 fw-bold text-dark">${row.name}</h6>
-                                            <p class="mb-1 small text-secondary"><strong>Días:</strong> ${daysText}</p>
+                        });
+                    }
+                    if (userDates.length > 0) {
+                        userDates.sort((a, b) => a.localeCompare(b));
+                        const daysText = userDates.join(', ');
+                        const item = `<div class="list-group-item p-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div style="max-width: 75%;">
+                                                <h6 class="mb-1 fw-bold text-dark">${row.name}</h6>
+                                                <p class="mb-1 small text-secondary"><strong>Días:</strong> ${daysText}</p>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge rounded-pill ${headerClass} d-block mb-1">${statusCode}</span>
+                                            </div>
                                         </div>
-                                        <div class="text-end">
-                                            <span class="badge rounded-pill ${headerClass} d-block mb-1">${statusCode}</span>
-                                        </div>
-                                    </div>
-                                  </div>`;
-                    listContainer.innerHTML += item;
-                    foundCount++;
+                                      </div>`;
+                        listContainer.innerHTML += item;
+                        foundCount++;
+                    }
+                });
+                if (foundCount === 0) {
+                    emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
+                } else {
+                    emptyMsg.className = 'p-4 text-center d-none'; listContainer.classList.remove('d-none');
                 }
-            });
-            if (foundCount === 0) {
-                emptyMsg.classList.remove('d-none'); listContainer.classList.add('d-none');
-            } else {
-                emptyMsg.className = 'p-4 text-center d-none'; listContainer.classList.remove('d-none');
+                new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
             }
-            new bootstrap.Modal(document.getElementById('statusDetailsModal')).show();
-        }
-    </script>
-}
+        </script>
+    }

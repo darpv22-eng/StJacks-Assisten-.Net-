@@ -5,38 +5,51 @@
 
 @{
     ViewData["Title"] = "Consolidado de Ausentismo";
-    var periodoActivo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
 
-    // Lista de líneas según tu estructura de categorías
-    var todasLasLineas = await _context.Set<Category>()
-        .Where(c => c.Name != "Confeccion" && c.Name != "Empaque" && c.Name != "Digitador" && c.Name != "Supervisor" && c.Name != "Mecanicos")
-        .OrderBy(c => c.Name).ToListAsync();
-
-    var datosBD = await _context.Set<Attendence>()
+    // CARGAMOS TODOS LOS DATOS SIN FILTRAR POR PERIODO
+    var datosBD = _context.Set<Attendence>()
         .Include(a => a.Operator).ThenInclude(o => o.Linea)
-        .Where(a => a.PeriodId == periodoActivo.Id && a.Status != "X")
-        .ToListAsync();
+        .ToList();
+
+    var todosLosPeriodos = _context.Set<Periodss>().OrderBy(p => p.StartDate).ToList();
+    var todasLasLineas = _context.Set<Category>().OrderBy(c => c.Name).ToList();
 
     var reporteCompleto = new List<dynamic>();
 
-    // Generar reporte consecutivo por fecha y línea
-    for (var d = periodoActivo.StartDate; d <= periodoActivo.EndDate; d = d.AddDays(1))
+    // RECORREMOS CADA PERIODO PARA MANTENER EL ORDEN Y LA ESTRUCTURA
+    foreach (var p in todosLosPeriodos)
     {
-        if (d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday) continue;
-
-        foreach (var linea in todasLasLineas)
+        for (var d = p.StartDate; d <= p.EndDate; d = d.AddDays(1))
         {
-            var registros = datosBD.Where(a => a.AttendanceDate.Date == d.Date && a.Operator?.Linea?.Name == linea.Name).ToList();
+            if (d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday) continue;
 
-            reporteCompleto.Add(new
+            foreach (var linea in todasLasLineas)
             {
-                Fecha = d,
-                Linea = linea.Name,
-                Incapacidad = registros.Where(x => x.Status == "INC").Sum(x => (double)(x.Hours ?? 8.5) + ((x.Minutes ?? 0) / 60.0)),
-                Permiso = registros.Where(x => x.Status == "PP").Sum(x => (double)(x.Hours ?? 0) + ((x.Minutes ?? 0) / 60.0)),
-                Clinica = registros.Where(x => x.Status == "CLINICA").Sum(x => (double)(x.Hours ?? 0) + ((x.Minutes ?? 0) / 60.0)),
-                ISSS = registros.Where(x => x.Status == "ISSS").Sum(x => (double)(x.Hours ?? 0) + ((x.Minutes ?? 0) / 60.0))
-            });
+                var registros = datosBD.Where(a => a.AttendanceDate.Date == d.Date &&
+                                              a.Operator?.Linea?.Name == linea.Name).ToList();
+
+                // Lógica de suma flexible que detecta cualquier variante
+                double GetSum(string[] tipos) => registros
+                    .Where(x => x.Status != null && tipos.Contains(x.Status.Trim().ToUpper()))
+                    .Sum(x => (double)(x.Hours ?? 0) + ((x.Minutes ?? 0) / 60.0));
+
+                var inc = GetSum(new[] { "INC", "INCAPACIDAD" });
+                var pp = GetSum(new[] { "PP", "PERMISO" });
+                var clin = GetSum(new[] { "CLINICA", "CL" });
+                var iss = GetSum(new[] { "ISSS", "SEGURO", "SEGURO SOCIAL" });
+
+                // Agregamos siempre la fila para que aparezcan las fechas
+                reporteCompleto.Add(new
+                {
+                    Periodo = p.Id,
+                    Fecha = d,
+                    Linea = linea.Name,
+                    Incapacidad = inc,
+                    Permiso = pp,
+                    Clinica = clin,
+                    ISSS = iss
+                });
+            }
         }
     }
 }
@@ -45,37 +58,34 @@
     <table class="table table-bordered table-excel">
         <thead class="table-dark">
             <tr>
+                <th>PERIODO</th>
                 <th>FECHA</th>
-                <th>MES</th>
                 <th>LINEA</th>
-                <th>INCAPACIDAD</th>
-                <th>PERMISO</th>
+                <th>INC</th>
+                <th>PP</th>
                 <th>CLINICA</th>
                 <th>ISSS</th>
-                <th>TOTAL MINUTOS</th>
-                <th>MODA PARCIAL</th>
+                <th>TOTAL MIN</th>
                 <th>MODA TOTAL</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in reporteCompleto)
             {
-                double totHoras = item.Incapacidad + item.Permiso + item.Clinica + item.ISSS;
+                double totHoras = (double)item.Incapacidad + (double)item.Permiso + (double)item.Clinica + (double)item.ISSS;
                 double totMin = totHoras * 60;
-                int modaParcial = totHoras > 0 ? 1 : 0;
-                double modaTotal = totHoras / 510.0;
+                double modaTotal = (totMin > 0) ? totMin / 510.0 : 0;
 
                 <tr>
+                    <td>@item.Periodo</td>
                     <td>@item.Fecha.ToString("d-MMM-yy")</td>
-                    <td>@item.Fecha.ToString("MMMM yyyy")</td>
                     <td>@item.Linea</td>
-                    <td>@(item.Incapacidad > 0 ? item.Incapacidad.ToString("0.0") : "")</td>
-                    <td>@(item.Permiso > 0 ? item.Permiso.ToString("0.0") : "")</td>
-                    <td>@(item.Clinica > 0 ? item.Clinica.ToString("0.0") : "")</td>
-                    <td>@(item.ISSS > 0 ? item.ISSS.ToString("0.0") : "")</td>
+                    <td>@(item.Incapacidad > 0 ? ((double)item.Incapacidad).ToString("0.0") : "")</td>
+                    <td>@(item.Permiso > 0 ? ((double)item.Permiso).ToString("0.0") : "")</td>
+                    <td>@(item.Clinica > 0 ? ((double)item.Clinica).ToString("0.0") : "")</td>
+                    <td>@(item.ISSS > 0 ? ((double)item.ISSS).ToString("0.0") : "")</td>
                     <td class="fw-bold">@(totMin > 0 ? totMin.ToString("0.0") : "")</td>
-                    <td>@modaParcial</td>
-                    <td>@(modaTotal > 0 ? modaTotal.ToString("0.00") : "")</td>
+                    <td>@(modaTotal > 0 ? modaTotal.ToString("0.00") : "-")</td>
                 </tr>
             }
         </tbody>
