@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using StjacksAssistens.Data;
 using StjacksAssistens.Models;
+using StjacksAssistens.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,12 @@ namespace StjacksAssistens.Controllers
     public class AusentismoController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ReporteService _reportes;
 
-        public AusentismoController(ApplicationDbContext context)
+        public AusentismoController(ApplicationDbContext context, ReporteService reportes)
         {
             _context = context;
+            _reportes = reportes;
         }
 
         #region REPORTE CONFECCIÓN
@@ -25,58 +28,17 @@ namespace StjacksAssistens.Controllers
         {
             if (periodId == null || periodId == 0)
             {
-                var ultimo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                if (ultimo == null) return NotFound();
+                var ultimo = await _reportes.ObtenerUltimoPeriodoAsync();
+                if (ultimo == null) return NotFound("No hay periodos creados aún.");
                 return RedirectToAction(nameof(ReporteOperarios), new { periodId = ultimo.Id });
             }
 
-            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
-            ViewBag.TodosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
+            if (periodo == null) return NotFound("Periodo no encontrado.");
 
-            // CORRECCIÓN: Filtrar por el área de Confección usando la nueva estructura
-            var operators = await _context.Set<Operators>()
-                .Include(o => o.Area)
-                .Where(o => o.Area.Name.Contains("Confeccion"))
-                .ToListAsync();
+            ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
-            // CORRECCIÓN: op.Id -> op.OperatorsId
-            var operatorIds = operators.Select(o => o.OperatorsId).ToList();
-
-            // Filtrar asistencias SOLO de los operarios de Confección de este periodo
-            var asistencias = await _context.Set<Attendence>()
-                .Where(a => a.PeriodId == periodId && a.Status != "X" && operatorIds.Contains(a.OperatorsId))
-                .ToListAsync();
-
-            var listaEmpleados = new List<EmpleadoAusencia>();
-
-            foreach (var op in operators)
-            {
-                // CORRECCIÓN: op.Id -> op.OperatorsId
-                var asisOp = asistencias.Where(a => a.OperatorsId == op.OperatorsId).ToList();
-                if (asisOp.Any())
-                {
-                    DateTime midPoint = periodo.StartDate.AddDays(7);
-                    listaEmpleados.Add(new EmpleadoAusencia
-                    {
-                        Codigo = op.Code.ToString(),
-                        Nombre = op.Name,
-                        Semanas = new List<SemanaDetalle>
-                        {
-                            GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint)),
-                            GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint))
-                        }
-                    });
-                }
-            }
-
-            return View(new OperariosReportViewModel
-            {
-                Periodo = periodo,
-                Empleados = listaEmpleados,
-                AreaNombre = "CONFECCIÓN P2",
-                CDC = "407",
-                TipoPlanilla = "06 Obra (Catorcenal)"
-            });
+            return View(await _reportes.GenerarReporteConfeccionAsync(periodo));
         }
 
         // 2. REPORTE POR HORAS (Faltas Parciales "PP")
@@ -84,13 +46,15 @@ namespace StjacksAssistens.Controllers
         {
             if (periodId == null || periodId == 0)
             {
-                var ultimo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                if (ultimo == null) return NotFound();
+                var ultimo = await _reportes.ObtenerUltimoPeriodoAsync();
+                if (ultimo == null) return NotFound("No hay periodos creados aún.");
                 return RedirectToAction(nameof(ReporteOperariosHoras), new { periodId = ultimo.Id });
             }
 
-            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
-            ViewBag.TodosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
+            if (periodo == null) return NotFound("Periodo no encontrado.");
+
+            ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
             // CORRECCIÓN: Filtrar asistencias PP asegurando que pertenezcan a Confección usando .Area
             var asistenciasConPP = await _context.Set<Attendence>()
@@ -105,14 +69,16 @@ namespace StjacksAssistens.Controllers
                 .Where(o => o.Area.Name.Contains("Confeccion") && idsConfeccionConFalta.Contains(o.OperatorsId))
                 .ToListAsync();
 
+            // Una sola consulta con todas las asistencias del periodo (antes se consultaba dentro del foreach)
+            var asistenciasPeriodo = await _context.Set<Attendence>()
+                .Where(a => a.PeriodId == periodId && idsConfeccionConFalta.Contains(a.OperatorsId))
+                .ToListAsync();
+
             var listaEmpleados = new List<EmpleadoAusencia>();
 
             foreach (var op in operators)
             {
-                // CORRECCIÓN: op.Id -> op.OperatorsId
-                var asisOp = await _context.Set<Attendence>()
-                    .Where(a => a.OperatorsId == op.OperatorsId && a.PeriodId == periodId)
-                    .ToListAsync();
+                var asisOp = asistenciasPeriodo.Where(a => a.OperatorsId == op.OperatorsId).ToList();
 
                 var registroConHoras = asisOp.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
                 DateTime midPoint = periodo.StartDate.AddDays(7);
@@ -125,8 +91,8 @@ namespace StjacksAssistens.Controllers
                     MinutosAusente = registroConHoras?.Minutes ?? 0,
                     Semanas = new List<SemanaDetalle>
                     {
-                        GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint && a.Status == "PP")),
-                        GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint && a.Status == "PP"))
+                        _reportes.GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint && a.Status == "PP")),
+                        _reportes.GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint && a.Status == "PP"))
                     }
                 });
             }
@@ -144,6 +110,7 @@ namespace StjacksAssistens.Controllers
 
         // 3. GUARDAR HORAS ESPECÍFICO PARA CONFECCIÓN
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarHorasConfeccion([FromBody] StjacksAssistens.Models.TimeRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.OperatorCode))
@@ -152,7 +119,6 @@ namespace StjacksAssistens.Controllers
             var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
             if (operario == null) return NotFound("Operario no encontrado.");
 
-            // CORRECCIÓN: operario.Id -> operario.OperatorsId
             var asistencias = await _context.Set<Attendence>()
                 .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
                 .ToListAsync();
@@ -168,38 +134,21 @@ namespace StjacksAssistens.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-        private SemanaDetalle GenerarDetalleSemana(IEnumerable<Attendence> asistencias)
-        {
-            var detalle = new SemanaDetalle();
-            var faltas = new List<string>();
-            var obsBD = asistencias.FirstOrDefault(a => !string.IsNullOrEmpty(a.Observation))?.Observation;
 
-            foreach (var a in asistencias)
-            {
-                switch (a.AttendanceDate.DayOfWeek)
-                {
-                    case DayOfWeek.Monday: detalle.Lunes = a.AttendanceDate; break;
-                    case DayOfWeek.Tuesday: detalle.Martes = a.AttendanceDate; break;
-                    case DayOfWeek.Wednesday: detalle.Miercoles = a.AttendanceDate; break;
-                    case DayOfWeek.Thursday: detalle.Jueves = a.AttendanceDate; break;
-                    case DayOfWeek.Friday: detalle.Viernes = a.AttendanceDate; break;
-                }
-                if (a.Status != "X") faltas.Add($"{a.Status}: {a.AttendanceDate:dd/MM}");
-            }
-
-            detalle.Motivo = !string.IsNullOrEmpty(obsBD) ? obsBD : string.Join(", ", faltas);
-            return detalle;
-        }
         #region REPORTE MECÁNICOS
         public async Task<IActionResult> ReporteMecanicos(int? periodId)
         {
             if (periodId == null || periodId == 0)
             {
-                var ultimo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                return RedirectToAction(nameof(ReporteMecanicos), new { periodId = ultimo?.Id });
+                var ultimo = await _reportes.ObtenerUltimoPeriodoAsync();
+                if (ultimo == null) return NotFound("No hay periodos creados aún.");
+                return RedirectToAction(nameof(ReporteMecanicos), new { periodId = ultimo.Id });
             }
-            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
-            ViewBag.TodosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+
+            var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
+            if (periodo == null) return NotFound("Periodo no encontrado.");
+
+            ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
             // CORRECCIÓN: Filtrar mecánicos utilizando la relación .Area
             var mecanicos = await _context.Set<Operators>()
@@ -216,7 +165,6 @@ namespace StjacksAssistens.Controllers
                 for (int i = 0; i < 2; i++)
                 {
                     DateTime inicioSemana = periodo.StartDate.AddDays(i * 7);
-                    // CORRECCIÓN: mec.Id -> mec.OperatorsId
                     var asisSem = asistencias.Where(a => a.OperatorsId == mec.OperatorsId && a.AttendanceDate >= inicioSemana && a.AttendanceDate < inicioSemana.AddDays(7)).ToList();
                     row.Semanas.Add(new SemanaDatos
                     {
@@ -239,12 +187,15 @@ namespace StjacksAssistens.Controllers
         {
             if (periodId == null || periodId == 0)
             {
-                var ultimo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                return RedirectToAction(nameof(ReporteMecanicosHoras), new { periodId = ultimo?.Id });
+                var ultimo = await _reportes.ObtenerUltimoPeriodoAsync();
+                if (ultimo == null) return NotFound("No hay periodos creados aún.");
+                return RedirectToAction(nameof(ReporteMecanicosHoras), new { periodId = ultimo.Id });
             }
 
-            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
-            ViewBag.TodosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
+            if (periodo == null) return NotFound("Periodo no encontrado.");
+
+            ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
             // CORRECCIÓN: Filtrar asistencias PP vinculando con .Area en lugar de .Category
             var asistenciasConPP = await _context.Set<Attendence>()
@@ -259,14 +210,16 @@ namespace StjacksAssistens.Controllers
                 .Where(o => o.Area.Name == "Mecanicos" && idsMecanicosConFalta.Contains(o.OperatorsId))
                 .ToListAsync();
 
+            // Una sola consulta con todas las asistencias del periodo (antes se consultaba dentro del foreach)
+            var asistenciasPeriodo = await _context.Set<Attendence>()
+                .Where(a => a.PeriodId == periodId && idsMecanicosConFalta.Contains(a.OperatorsId))
+                .ToListAsync();
+
             var listaMecanicos = new List<EmpleadoAusentismoRow>();
 
             foreach (var mec in mecanicos)
             {
-                // CORRECCIÓN: mec.Id -> mec.OperatorsId
-                var asisMec = await _context.Set<Attendence>()
-                    .Where(a => a.OperatorsId == mec.OperatorsId && a.PeriodId == periodId)
-                    .ToListAsync();
+                var asisMec = asistenciasPeriodo.Where(a => a.OperatorsId == mec.OperatorsId).ToList();
 
                 var registroConHoras = asisMec.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
 
@@ -293,6 +246,7 @@ namespace StjacksAssistens.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarHorasMecanico([FromBody] StjacksAssistens.Models.TimeRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.OperatorCode))
@@ -303,7 +257,6 @@ namespace StjacksAssistens.Controllers
             var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code == codeInt);
             if (operario == null) return NotFound("Operario no encontrado.");
 
-            // CORRECCIÓN: operario.Id -> operario.OperatorsId
             var asistencias = await _context.Set<Attendence>()
                 .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
                 .ToListAsync();
@@ -328,13 +281,13 @@ namespace StjacksAssistens.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarObservacion([FromBody] StjacksAssistens.Models.ObservationRequest request)
         {
             if (request == null) return BadRequest("Datos inválidos");
             var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
             if (operario == null) return NotFound();
 
-            // CORRECCIÓN: operario.Id -> operario.OperatorsId
             var asistencias = await _context.Set<Attendence>()
                 .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
                 .ToListAsync();
@@ -354,12 +307,15 @@ namespace StjacksAssistens.Controllers
         {
             if (periodId == null || periodId == 0)
             {
-                var ultimo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                return RedirectToAction(nameof(ReporteEmpaque), new { periodId = ultimo?.Id });
+                var ultimo = await _reportes.ObtenerUltimoPeriodoAsync();
+                if (ultimo == null) return NotFound("No hay periodos creados aún.");
+                return RedirectToAction(nameof(ReporteEmpaque), new { periodId = ultimo.Id });
             }
 
-            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
-            ViewBag.TodosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
+            if (periodo == null) return NotFound("Periodo no encontrado.");
+
+            ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
             // CORRECCIÓN: Cambiado de .Category a .Area
             var operariosEmpaque = await _context.Set<Operators>()
@@ -367,7 +323,6 @@ namespace StjacksAssistens.Controllers
                 .Where(o => o.Area.Name == "Empaque")
                 .ToListAsync();
 
-            // CORRECCIÓN: o.Id -> o.OperatorsId
             var idsEmpaque = operariosEmpaque.Select(o => o.OperatorsId).ToList();
 
             var asistencias = await _context.Set<Attendence>()
@@ -379,7 +334,6 @@ namespace StjacksAssistens.Controllers
 
             foreach (var op in operariosEmpaque)
             {
-                // CORRECCIÓN: op.Id -> op.OperatorsId
                 var asisOp = asistencias.Where(a => a.OperatorsId == op.OperatorsId).ToList();
 
                 if (asisOp.Any(a => a.Status == "PP" || a.Status == "F" || !string.IsNullOrEmpty(a.Observation)))
@@ -433,12 +387,15 @@ namespace StjacksAssistens.Controllers
         {
             if (periodId == null || periodId == 0)
             {
-                var ultimo = await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
-                return RedirectToAction(nameof(ReporteEmpaqueHoras), new { periodId = ultimo?.Id });
+                var ultimo = await _reportes.ObtenerUltimoPeriodoAsync();
+                if (ultimo == null) return NotFound("No hay periodos creados aún.");
+                return RedirectToAction(nameof(ReporteEmpaqueHoras), new { periodId = ultimo.Id });
             }
 
-            var periodo = await _context.Set<Periodss>().FindAsync(periodId);
-            ViewBag.TodosLosPeriodos = await _context.Set<Periodss>().OrderByDescending(p => p.StartDate).ToListAsync();
+            var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
+            if (periodo == null) return NotFound("Periodo no encontrado.");
+
+            ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
             // CORRECCIÓN: Cambiado de .Category a .Area
             var operariosEmpaque = await _context.Set<Operators>()
@@ -446,7 +403,6 @@ namespace StjacksAssistens.Controllers
                 .Where(o => o.Area.Name == "Empaque")
                 .ToListAsync();
 
-            // CORRECCIÓN: o.Id -> o.OperatorsId
             var idsEmpaque = operariosEmpaque.Select(o => o.OperatorsId).ToList();
 
             var asistenciasConPP = await _context.Set<Attendence>()
@@ -455,15 +411,17 @@ namespace StjacksAssistens.Controllers
 
             var idsConFaltaConcreta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
 
+            // Una sola consulta con todas las asistencias del periodo (antes se consultaba dentro del foreach)
+            var asistenciasPeriodo = await _context.Set<Attendence>()
+                .Where(a => a.PeriodId == periodId && idsConFaltaConcreta.Contains(a.OperatorsId))
+                .ToListAsync();
+
             var listaEmpleados = new List<EmpleadoAusencia>();
             var finSemana1 = periodo.StartDate.AddDays(6).Date;
 
             foreach (var op in operariosEmpaque.Where(o => idsConFaltaConcreta.Contains(o.OperatorsId)))
             {
-                // CORRECCIÓN: op.Id -> op.OperatorsId
-                var asisEmp = await _context.Set<Attendence>()
-                    .Where(a => a.OperatorsId == op.OperatorsId && a.PeriodId == periodId)
-                    .ToListAsync();
+                var asisEmp = asistenciasPeriodo.Where(a => a.OperatorsId == op.OperatorsId).ToList();
 
                 var registroConHoras = asisEmp.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
 
@@ -512,8 +470,9 @@ namespace StjacksAssistens.Controllers
             return View(model);
         }
 
-        // 3. GUARDAR HORAS DE EMPAQUE 
+        // 3. GUARDAR HORAS DE EMPAQUE
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarHorasEmpaque([FromBody] StjacksAssistens.Models.TimeRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.OperatorCode))
@@ -525,7 +484,6 @@ namespace StjacksAssistens.Controllers
             var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code == codeInt);
             if (operario == null) return NotFound("Operario no encontrado.");
 
-            // CORRECCIÓN: operario.Id -> operario.OperatorsId
             var asistencias = await _context.Set<Attendence>()
                 .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
                 .ToListAsync();
@@ -548,8 +506,8 @@ namespace StjacksAssistens.Controllers
         public async Task<IActionResult> SábanaConsolidada(int? periodId)
         {
             var periodo = periodId.HasValue
-                ? await _context.Set<Periodss>().FindAsync(periodId)
-                : await _context.Set<Periodss>().OrderByDescending(p => p.Id).FirstOrDefaultAsync();
+                ? await _reportes.ObtenerPeriodoAsync(periodId.Value)
+                : await _reportes.ObtenerUltimoPeriodoAsync();
 
             if (periodo == null) return NotFound();
 
@@ -571,7 +529,7 @@ namespace StjacksAssistens.Controllers
             {
                 foreach (var linea in lineas)
                 {
-                    var att = asistencias.FirstOrDefault(a => a.AttendanceDate.Date == fecha.Date && a.Operator.Linea.Name.Contains(linea));
+                    var att = asistencias.FirstOrDefault(a => a.AttendanceDate.Date == fecha.Date && a.Operator.Linea != null && a.Operator.Linea.Name.Contains(linea));
 
                     // Lógica de cálculo basada en tu Excel
                     double inc = (att?.Status == "INC") ? 8.5 : 0;

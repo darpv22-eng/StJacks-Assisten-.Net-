@@ -1,0 +1,202 @@
+﻿/*HOME -------------------------------------------*/
+:root {
+    --st-primary: #4361ee;
+    --st-secondary: #7209b7;
+    --st-success: #4cc9f0;
+    --st-bg: #f8f9fa;
+}
+
+.dashboard-container {
+    background: var(--st-bg);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.premium-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+
+    .premium-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(67, 97, 238, 0.1);
+    }
+
+.icon-shape {
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    font-size: 1.5rem;
+}
+
+.chart-wrapper {
+    height: 350px;
+    width: 100%;
+}
+
+.mini-chart-wrapper {
+    height: 110px;
+    width: 100%;
+}
+
+.alert-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.bg-grad-primary {
+    background: linear-gradient(135deg, #4361ee, #4895ef);
+}
+
+.bg-grad-success {
+    background: linear-gradient(135deg, #2ec4b6, #cbf3f0);
+}
+
+.bg-grad-warning {
+    background: linear-gradient(135deg, #ff9f1c, #ffbf69);
+}
+
+.bg-grad-danger {
+    background: linear-gradient(135deg, #e63946, #f1faee);
+}
+
+.quick-action-btn {
+    border-radius: 1rem;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.05);
+    background: white;
+    transition: 0.2s;
+}
+
+    .quick-action-btn:hover {
+        background: var(--st-primary);
+        color: white !important;
+    }
+
+.progress-sm {
+    height: 8px;
+}
+
+.distribution-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+}
+
+.kpi-subtext-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #f1f3f5;
+    font-size: 0.7rem;
+    color: #8a92a6;
+}
+
+
+
+
+/* Fondos suaves para iconos */
+.bg-primary-soft {
+    background-color: rgba(67, 97, 238, 0.1);
+}
+
+.bg-success-soft {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.bg-warning-soft {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bg-warning-light {
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+/* Caja de icono circular */
+.icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Bordes de tarjetas */
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+/* Estilo para el botón dentro de la card */
+.btn-light {
+    background-color: #f8f9fa;
+    border: none;
+}
+
+    .btn-light:hover {
+        background-color: #f1f3f5;
+    }
+/* --- Estilos para el Módulo Tintorería --- */
+/* (Copia y pega esto al final de tu archivo existente) */
+
+.tintoreria-card {
+    --ink: #1c2732;
+    --steel-text: #5a6875;
+    --line: #e3e7ea;
+    --amber: #e2933a;
+    --amber-bg: #fdf3e6;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    padding: 22px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+    .tintoreria-card:hover {
+        box-shadow: 0 16px 30px -10px rgba(28,39,50,0.18);
+        transform: translateY(-2px);
+    }
+
+    .tintoreria-card .brand {
+        font-family: 'Oswald', sans-serif;
+        font-size: 19px;
+        color: var(--ink);
+        margin: 0 0 3px;
+    }
+
+    .tintoreria-card .tagline {
+        font-size: 12px;
+        color: var(--steel-text);
+        margin: 0 0 16px;
+    }
+
+    .tintoreria-card .icon-box {
+        width: 44px;
+        height: 44px;
+        background: var(--amber-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .tintoreria-card .num {
+        font-family: 'Oswald', sans-serif;
+        font-size: 17px;
+        color: var(--ink);
+    }
+/* ... (puedes agregar el resto de las clases manteniendo los prefijos para no chocar con bootstrap) */
