@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
-using StjacksAssistens.Data;
+using StjacksAssistens.ConfeccionData;
 
 namespace StjacksAssistens
 {
@@ -14,7 +14,10 @@ namespace StjacksAssistens
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddScoped<StjacksAssistens.Services.ReporteService>();
+
             var app = builder.Build();
+      
 
             if (!app.Environment.IsDevelopment())
             {
@@ -31,7 +34,8 @@ namespace StjacksAssistens
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Home}/{action=Homee}/{id?}");
+              //pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
         }

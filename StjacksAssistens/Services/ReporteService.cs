@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StjacksAssistens.Data;
-using StjacksAssistens.Models;
+using StjacksAssistens.ConfeccionData;
+using StjacksAssistens.ConfeccionModels;
 
 namespace StjacksAssistens.Services
 {
