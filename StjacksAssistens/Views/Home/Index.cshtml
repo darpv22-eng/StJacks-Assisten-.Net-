@@ -3,7 +3,6 @@
 }
 <link rel="stylesheet" href="~/css/home.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-
 <style>
     :root {
         --st-primary: #4361ee;
@@ -11,13 +10,11 @@
         --st-success: #4cc9f0;
         --st-bg: #f8f9fa;
     }
-
     .dashboard-container {
         background: var(--st-bg);
         min-height: 100vh;
         padding: 2rem 1rem;
     }
-
     .premium-card {
         background: #ffffff;
         border: none;
@@ -25,12 +22,10 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
         transition: all 0.3s ease;
     }
-
         .premium-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(67, 97, 238, 0.1);
         }
-
     .icon-shape {
         width: 55px;
         height: 55px;
@@ -40,17 +35,14 @@
         border-radius: 1rem;
         font-size: 1.5rem;
     }
-
     .chart-wrapper {
         height: 350px;
         width: 100%;
     }
-
     .mini-chart-wrapper {
         height: 110px;
         width: 100%;
     }
-
     .alert-indicator {
         width: 10px;
         height: 10px;
@@ -58,23 +50,18 @@
         display: inline-block;
         margin-right: 8px;
     }
-
     .bg-grad-primary {
         background: linear-gradient(135deg, #4361ee, #4895ef);
     }
-
     .bg-grad-success {
         background: linear-gradient(135deg, #2ec4b6, #cbf3f0);
     }
-
     .bg-grad-warning {
         background: linear-gradient(135deg, #ff9f1c, #ffbf69);
     }
-
     .bg-grad-danger {
         background: linear-gradient(135deg, #e63946, #f1faee);
     }
-
     .quick-action-btn {
         border-radius: 1rem;
         padding: 1rem;
@@ -83,22 +70,18 @@
         background: white;
         transition: 0.2s;
     }
-
         .quick-action-btn:hover {
             background: var(--st-primary);
             color: white !important;
         }
-
     .progress-sm {
         height: 8px;
     }
-
     .distribution-badge {
         font-size: 0.75rem;
         padding: 0.4rem 0.6rem;
         border-radius: 0.5rem;
     }
-
     .kpi-subtext-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -110,7 +93,6 @@
         color: #8a92a6;
     }
 </style>
-
 <div class="dashboard-container">
     <div class="row mb-4 align-items-end">
         <div class="col-md-7">
@@ -128,7 +110,6 @@
             </div>
         </div>
     </div>
-
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card premium-card p-3 h-100">
@@ -146,7 +127,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-md-4">
             <a asp-controller="Home" asp-action="Aunsentismo" class="card premium-card p-3 h-100 text-decoration-none text-dark shadow-sm bg-white d-block">
                 <div class="d-flex justify-content-between align-items-start">
@@ -163,7 +143,6 @@
                 </div>
             </a>
         </div>
-
         <div class="col-md-4">
             <a asp-controller="Spreadsheet" asp-action="Index" class="card premium-card p-3 text-decoration-none shadow-sm h-100 bg-white">
                 <div class="d-flex justify-content-between align-items-start">
@@ -181,7 +160,6 @@
             </a>
         </div>
     </div>
-
     <div class="row g-4 mb-4">
         <div class="col-lg-8">
             <div class="card premium-card p-4 h-100">

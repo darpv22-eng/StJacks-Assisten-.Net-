@@ -7,7 +7,7 @@ namespace StjacksAssistens.TintoModels
     {
 
         public int GroupsId { get; set; }
-        public string Name { get; set; }
+        public string Names { get; set; }
 
     }
 }

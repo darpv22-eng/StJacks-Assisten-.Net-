@@ -1,83 +1,105 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StjacksAssistens.TintoData;
+using StjacksAssistens.TintoModels;
 
 namespace StjacksAssistens.TintoControllers
 {
     public class GroupsController : Controller
     {
-        // GET: GroupsController
-        public ActionResult Index()
+        private readonly TintoDbContext _context;
+
+        public GroupsController(TintoDbContext context)
         {
-            return View();
+            _context = context;
         }
 
-        // GET: GroupsController/Details/5
-        public ActionResult Details(int id)
+        // Carga la lista de grupos y la envía a la vista ubicada en la carpeta TintoGroups
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var viewModel = new TintoDashboardViewModel
+            {
+                Groups = await _context.Groups.ToListAsync(),
+                Operators = await _context.OperatorsTintos.ToListAsync()
+            };
+
+            return View("~/Views/TintoGroups/Index.cshtml", viewModel);
         }
 
-        // GET: GroupsController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
+        // Método POST para crear operarios
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Create(OperatorsTinto operatorsTinto)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        _context.Add(operatorsTinto);
+        //        await _context.SaveChangesAsync();
+        //    }
 
-        // POST: GroupsController/Create
+        //    return RedirectToAction("Index", "Index");
+        //}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create(Groups group)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                _context.Add(group);
+                await _context.SaveChangesAsync();
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: GroupsController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: GroupsController/Edit/5
+        // Método POST para editar operarios
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Edit(int id, OperatorsTintos operatorsTintos)
         {
-            try
+            if (id != operatorsTintos.OperatorsTintosId)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+
+            if (ModelState.IsValid)
             {
-                return View();
+                try
+                {
+                    _context.Update(operatorsTintos);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.OperatorsTintos.Any(e => e.OperatorsTintosId == id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction("Index", "Groups");
             }
+
+            return RedirectToAction("Index", "Groups");
         }
 
-        // GET: GroupsController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: GroupsController/Delete/5
+        // Método POST para eliminar operarios
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> Delete(int id)
         {
-            try
+            var operatorsTinto = await _context.OperatorsTintos.FindAsync(id);
+            if (operatorsTinto != null)
             {
-                return RedirectToAction(nameof(Index));
+                _context.OperatorsTintos.Remove(operatorsTinto);
+                await _context.SaveChangesAsync();
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction("Index", "Groups");
         }
     }
 }

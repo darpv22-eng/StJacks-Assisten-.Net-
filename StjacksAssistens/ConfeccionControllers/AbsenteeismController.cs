@@ -191,38 +191,26 @@ namespace StjacksAssistens.ConfeccionControllers
                 if (ultimo == null) return NotFound("No hay periodos creados aún.");
                 return RedirectToAction(nameof(ReporteMecanicosHoras), new { periodId = ultimo.Id });
             }
-
             var periodo = await _reportes.ObtenerPeriodoAsync(periodId.Value);
             if (periodo == null) return NotFound("Periodo no encontrado.");
-
             ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
-
-            // CORRECCIÓN: Filtrar asistencias PP vinculando con .Area en lugar de .Category
             var asistenciasConPP = await _context.Set<Attendence>()
                 .Include(a => a.Operator).ThenInclude(o => o.Area)
                 .Where(a => a.PeriodId == periodId && a.Status == "PP" && a.Operator.Area.Name == "Mecanicos")
                 .ToListAsync();
-
             var idsMecanicosConFalta = asistenciasConPP.Select(a => a.OperatorsId).Distinct().ToList();
-
             var mecanicos = await _context.Set<Operators>()
                 .Include(o => o.Area)
                 .Where(o => o.Area.Name == "Mecanicos" && idsMecanicosConFalta.Contains(o.OperatorsId))
                 .ToListAsync();
-
-            // Una sola consulta con todas las asistencias del periodo (antes se consultaba dentro del foreach)
             var asistenciasPeriodo = await _context.Set<Attendence>()
                 .Where(a => a.PeriodId == periodId && idsMecanicosConFalta.Contains(a.OperatorsId))
                 .ToListAsync();
-
             var listaMecanicos = new List<EmpleadoAusentismoRow>();
-
             foreach (var mec in mecanicos)
             {
                 var asisMec = asistenciasPeriodo.Where(a => a.OperatorsId == mec.OperatorsId).ToList();
-
                 var registroConHoras = asisMec.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
-
                 listaMecanicos.Add(new EmpleadoAusentismoRow
                 {
                     Codigo = mec.Code,
@@ -241,10 +229,8 @@ namespace StjacksAssistens.ConfeccionControllers
                     }
                 });
             }
-
             return View(new MecanicosReportViewModel { Periodo = periodo, Empleados = listaMecanicos });
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarHorasMecanico([FromBody] StjacksAssistens.ConfeccionModels.TimeRequest request)
@@ -253,17 +239,13 @@ namespace StjacksAssistens.ConfeccionControllers
                 return BadRequest("Datos incompletos.");
             if (!int.TryParse(request.OperatorCode, out int codeInt))
                 return BadRequest("El código del operario debe ser numérico.");
-
             var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code == codeInt);
             if (operario == null) return NotFound("Operario no encontrado.");
-
             var asistencias = await _context.Set<Attendence>()
                 .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
                 .ToListAsync();
-
             if (!asistencias.Any())
                 return NotFound("No hay registros de asistencia para este periodo.");
-
             foreach (var item in asistencias)
             {
                 item.Hours = request.Hours;
@@ -301,8 +283,6 @@ namespace StjacksAssistens.ConfeccionControllers
         }
 
         #region REPORTE EMPAQUE
-
-        // 1. REPORTE POR DÍA (Ausentismo Regular Empaque)
         public async Task<IActionResult> ReporteEmpaque(int? periodId)
         {
             if (periodId == null || periodId == 0)

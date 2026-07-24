@@ -3,12 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StjacksAssistens.TintoModels
 {
-    public class OperatorsTinto
+    public class OperatorsTintos
     {
         [Key]
-        public int OperatorsId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int OperatorsTintosId { get; set; }
         public int? GroupsId { get; set; }
-        public int Code { get; set; }
+        public int Codes { get; set; }
         public string Names { get; set; } = null!;
 
         [ForeignKey("GroupsId")]

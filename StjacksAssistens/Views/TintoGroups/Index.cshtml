@@ -1,0 +1,310 @@
+﻿@model StjacksAssistens.TintoModels.TintoDashboardViewModel
+
+@{
+    ViewData["Title"] = "Gestión de Grupos y Operadores | St. Jacks";
+}
+
+<!-- Estilos personalizados aesthetic / St. Jacks Theme -->
+<style>
+    :root {
+        --st-primary: #4f46e5;
+        --st-primary-hover: #4338ca;
+        --st-dark: #1e293b;
+        --st-card-bg: #ffffff;
+        --st-bg: #f8fafc;
+    }
+
+    body {
+        background-color: var(--st-bg);
+        color: #334155;
+    }
+
+    .st-card {
+        border: none;
+        border-radius: 1rem;
+        background: var(--st-card-bg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .st-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+
+    .card-header-custom {
+        background: transparent;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .btn-st-primary {
+        background-color: var(--st-primary);
+        color: #fff;
+        border-radius: 0.50rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+        .btn-st-primary:hover {
+            background-color: var(--st-primary-hover);
+            color: #fff;
+        }
+
+    .table-custom-st th {
+        font-weight: 600;
+        color: #64748b;
+        background-color: #f8fafc;
+        border-top: none;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    .table-custom-st td {
+        vertical-align: middle;
+        color: #334155;
+        font-size: 0.875rem;
+    }
+
+    .badge-soft {
+        background-color: #e0e7ff;
+        color: #4338ca;
+        padding: 0.35em 0.65em;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 0.375rem;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+        .search-box input {
+            border-radius: 0.5rem;
+            padding-left: 2.5rem;
+            font-size: 0.875rem;
+            border-color: #e2e8f0;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+</style>
+
+<div class="container-fluid py-5 px-4">
+    <!-- Encabezado Principal y Resumen Rápido -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+        <div>
+            <h1 class="fw-bold text-dark mb-1" style="font-size: 1.75rem;">Panel de Control Tinto</h1>
+            <p class="text-muted mb-0">Gestión centralizada de grupos operativos y personal de St. Jacks.</p>
+        </div>
+        <!-- Futuro: Botón de acciones globales o exportación -->
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled title="Próximamente: Exportar a Excel">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar Reporte
+            </button>
+        </div>
+    </div>
+
+    <!-- Layout de Dos Columnas (Grupos / Operadores) -->
+    <div class="row g-4">
+
+        <!-- ÁREA DE GRUPOS -->
+        <div class="col-lg-6">
+            <div class="card st-card h-100">
+                <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-indigo-subtle rounded-3 text-primary bg-light">
+                            <i class="bi bi-collection fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-dark">Grupos de Trabajo</h5>
+                            <small class="text-muted">Administra las categorías de operación</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-st-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#createModal">
+                        <i class="bi bi-plus-lg me-1"></i> Nuevo Grupo
+                    </button>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Futuro: Barra de búsqueda rápida para grupos -->
+                    <div class="search-box mb-3">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control" placeholder="Buscar grupo..." disabled />
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom-st align-middle">
+                            <thead>
+                                <tr>
+                                    <th># ID</th>
+                                    <th>Nombre del Grupo</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Groups != null && Model.Groups.Any())
+                                {
+                                    foreach (var item in Model.Groups)
+                                    {
+                                        <tr>
+                                            <td><span class="text-muted fw-semibold">@item.GroupsId</span></td>
+                                            <td><span class="fw-bold text-dark">@item.Names</span></td>
+                                            <td class="text-end">
+                                                <a asp-action="Edit" asp-route-id="@item.GroupsId" class="btn btn-light btn-sm text-secondary border-0" title="Editar Grupo">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                                <!-- Futuro: Botón de detalles o eliminación segura -->
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">No hay grupos registrados todavía.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÁREA DE OPERADORES -->
+        <div class="col-lg-6">
+            <div class="card st-card h-100">
+                <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 rounded-3 text-secondary bg-light">
+                            <i class="bi bi-people fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-dark">Operarios</h5>
+                            <small class="text-muted">Personal asignado a campo y entregas</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#createOperatorModal">
+                        <i class="bi bi-plus-lg me-1"></i> Nuevo Operario
+                    </button>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Futuro: Barra de búsqueda rápida para operadores -->
+                    <div class="search-box mb-3">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control" placeholder="Buscar operario por código o nombre..." disabled />
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom-st align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Operators != null && Model.Operators.Any())
+                                {
+                                    foreach (var op in Model.Operators)
+                                    {
+                                        <tr>
+                                            <td><span class="badge-soft">@op.Codes</span></td>
+                                            <td><span class="fw-medium text-dark">@op.Names</span></td>
+                                            <td class="text-end">
+                                                <button class="btn btn-light btn-sm text-muted border-0" disabled title="Próximamente: Editar Operario">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">No hay operarios registrados todavía.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL CREAR GRUPO -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <form asp-controller="Groups" asp-action="Create" method="post">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold" id="createModalLabel">Crear Nuevo Grupo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <div class="mb-3">
+                        <label for="Names" class="form-label text-muted small fw-semibold">Nombre del Grupo</label>
+                        <input type="text" class="form-control rounded-3" id="Names" name="Names" placeholder="Ej. Ruta Norte" required />
+                    </div>
+                </div>
+                <div class="modal-header border-0 pt-0 pb-4 px-4 justify-content-end gap-2">
+                    <button type="button" class="btn btn-light rounded-3 px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-st-primary px-4">Guardar Grupo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CREAR OPERARIO -->
+<div class="modal fade" id="createOperatorModal" tabindex="-1" aria-labelledby="createOperatorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <form asp-controller="OperatorsTintos" asp-action="Create" method="post">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold" id="createOperatorModalLabel">Crear Nuevo Operario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <div class="mb-3">
+                        <label for="Codes" class="form-label text-muted small fw-semibold">Código del Operario</label>
+                        <input type="number" class="form-control rounded-3" id="Codes" name="Codes" placeholder="Ej. 1024" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Names" class="form-label text-muted small fw-semibold">Nombre Completo</label>
+                        <input type="text" class="form-control rounded-3" id="Names" name="Names" placeholder="Ej. Carlos Pérez" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="GroupsId" class="form-label text-muted small fw-semibold">Asignar Grupo</label>
+                        <select class="form-select rounded-3" id="GroupsId" name="GroupsId" required>
+                            <option value="">Seleccione un grupo...</option>
+                            @if (Model.Groups != null)
+                            {
+                                foreach (var grupo in Model.Groups)
+                                {
+                                    <option value="@grupo.GroupsId">@grupo.Names</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-header border-0 pt-0 pb-4 px-4 justify-content-end gap-2">
+                    <button type="button" class="btn btn-light rounded-3 px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark rounded-3 px-4">Guardar Operario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
