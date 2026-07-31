@@ -4,7 +4,6 @@
     ViewData["Title"] = "Gestión de Grupos y Operadores | St. Jacks";
 }
 
-<!-- Estilos personalizados aesthetic / St. Jacks Theme -->
 <style>
     :root {
         --st-primary: #4f46e5;
@@ -94,16 +93,38 @@
             transform: translateY(-50%);
             color: #94a3b8;
         }
+
+    .metric-card {
+        border: none;
+        border-radius: 1rem;
+        background: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+        transition: all 0.2s ease;
+    }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        font-size: 1.25rem;
+    }
 </style>
 
 <div class="container-fluid py-5 px-4">
-    <!-- Encabezado Principal y Resumen Rápido -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+    <!-- Encabezado Principal -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
             <h1 class="fw-bold text-dark mb-1" style="font-size: 1.75rem;">Panel de Control Tinto</h1>
             <p class="text-muted mb-0">Gestión centralizada de grupos operativos y personal de St. Jacks.</p>
         </div>
-        <!-- Futuro: Botón de acciones globales o exportación -->
         <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled title="Próximamente: Exportar a Excel">
                 <i class="bi bi-file-earmark-excel me-1"></i> Exportar Reporte
@@ -111,15 +132,75 @@
         </div>
     </div>
 
-    <!-- Layout de Dos Columnas (Grupos / Operadores) -->
-    <div class="row g-4">
+    <!-- TARJETAS SUPERIORES -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <!-- Enlace que redirige a PlanController -> Index (que renderiza la vista de PlanTinto) -->
+            <a asp-controller="PlanTinto" asp-action="Index" class="text-decoration-none">
+                <div class="card metric-card p-3 h-100">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Módulo Activo</span>
+                            <h4 class="fw-bold text-dark mb-0 mt-1">Lotes a Bodega</h4>
+                            <span class="badge bg-success-subtle text-success mt-2 small px-2 py-1 rounded-pill">
+                                <i class="bi bi-check-circle-fill me-1"></i> En curso
+                            </span>
+                        </div>
+                        <div class="icon-box bg-primary-subtle text-primary bg-light">
+                            <i class="bi bi-layers"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card metric-card p-3 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase tracking-wider">Historial</span>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">Plan Acumulado</h4>
+                        <span class="text-muted small mt-1 d-block">
+                            <i class="bi bi-calendar-event me-1"></i> Mes actual (Julio)
+                        </span>
+                    </div>
+                    <div class="icon-box bg-warning-subtle text-warning bg-light">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card metric-card p-3 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase tracking-wider">Personal</span>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">Planilla</h4>
+                        <span class="text-primary small fw-medium mt-1 d-block">
+                            @{
+                                var totalOperators = Model.Operators != null ? Model.Operators.Count() : 0;
+                            }
+                            @totalOperators Operarios registrados
+                        </span>
+                    </div>
+                    <div class="icon-box bg-info-subtle text-info bg-light">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout de Dos Columnas -->
+    <div class="row g-4 align-items-start">
 
         <!-- ÁREA DE GRUPOS -->
         <div class="col-lg-6">
-            <div class="card st-card h-100">
+            <div class="card st-card">
                 <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="p-2 bg-indigo-subtle rounded-3 text-primary bg-light">
+                        <div class="p-2 rounded-3 text-primary bg-light">
                             <i class="bi bi-collection fs-5"></i>
                         </div>
                         <div>
@@ -133,15 +214,14 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <!-- Futuro: Barra de búsqueda rápida para grupos -->
                     <div class="search-box mb-3">
                         <i class="bi bi-search"></i>
                         <input type="text" class="form-control" placeholder="Buscar grupo..." disabled />
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-custom-st align-middle">
-                            <thead>
+                    <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                        <table class="table table-custom-st align-middle m-0">
+                            <thead style="position: sticky; top: 0; z-index: 1; background-color: #f8fafc;">
                                 <tr>
                                     <th># ID</th>
                                     <th>Nombre del Grupo</th>
@@ -160,7 +240,6 @@
                                                 <a asp-action="Edit" asp-route-id="@item.GroupsId" class="btn btn-light btn-sm text-secondary border-0" title="Editar Grupo">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </a>
-                                                <!-- Futuro: Botón de detalles o eliminación segura -->
                                             </td>
                                         </tr>
                                     }
@@ -180,7 +259,7 @@
 
         <!-- ÁREA DE OPERADORES -->
         <div class="col-lg-6">
-            <div class="card st-card h-100">
+            <div class="card st-card">
                 <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2">
                         <div class="p-2 rounded-3 text-secondary bg-light">
@@ -197,7 +276,6 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <!-- Futuro: Barra de búsqueda rápida para operadores -->
                     <div class="search-box mb-3">
                         <i class="bi bi-search"></i>
                         <input type="text" class="form-control" placeholder="Buscar operario por código o nombre..." disabled />
@@ -221,9 +299,12 @@
                                             <td><span class="badge-soft">@op.Codes</span></td>
                                             <td><span class="fw-medium text-dark">@op.Names</span></td>
                                             <td class="text-end">
-                                                <button class="btn btn-light btn-sm text-muted border-0" disabled title="Próximamente: Editar Operario">
-                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                </button>
+                                                <form asp-controller="Groups" asp-action="Delete" asp-route-id="@op.OperatorsTintosId" method="post" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este operario?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-light btn-sm text-danger border-0" title="Eliminar Operario">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
                                             </td>
                                         </tr>
                                     }

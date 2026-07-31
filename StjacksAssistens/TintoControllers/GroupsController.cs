@@ -88,18 +88,32 @@ namespace StjacksAssistens.TintoControllers
         }
 
         // Método POST para eliminar operarios
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Delete(int id)
+        //{
+        //    var operatorsTinto = await _context.OperatorsTintos.FindAsync(id);
+        //    if (operatorsTinto != null)
+        //    {
+        //        _context.OperatorsTintos.Remove(operatorsTinto);
+        //        await _context.SaveChangesAsync();
+        //    }
+
+        //    return RedirectToAction("Index", "Groups");
+        //}
+        // Método POST para eliminar operarios
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var operatorsTinto = await _context.OperatorsTintos.FindAsync(id);
-            if (operatorsTinto != null)
+            var operatorTinto = await _context.OperatorsTintos.FindAsync(id);
+            if (operatorTinto != null)
             {
-                _context.OperatorsTintos.Remove(operatorsTinto);
+                _context.OperatorsTintos.Remove(operatorTinto);
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToAction("Index", "Groups");
+            return RedirectToAction(nameof(Index));
         }
     }
 }

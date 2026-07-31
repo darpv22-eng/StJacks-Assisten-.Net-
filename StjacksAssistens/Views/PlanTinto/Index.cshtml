@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Importar Plan de Entregas";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold mb-3 text-dark">Subir Plan de Entregas (Excel)</h3>
+                    <p class="text-muted small mb-4">Selecciona el archivo Excel con los lotes, colores, kilos y estados para cargarlos automáticamente al sistema.</p>
+
+                    @if (TempData["Mensaje"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Mensaje"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-controller="Plan" asp-action="SubirExcel" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label for="archivoExcel" class="form-label fw-semibold text-secondary small">Archivo Excel (.xlsx)</label>
+                            <input type="file" class="form-control rounded-3" id="archivoExcel" name="archivoExcel" accept=".xlsx, .xls" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-3 py-2 fw-medium">
+                            <i class="bi bi-file-earmark-excel me-1"></i> Procesar y Guardar Plan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
