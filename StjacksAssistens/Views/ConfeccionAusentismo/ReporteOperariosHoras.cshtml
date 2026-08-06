@@ -177,19 +177,39 @@
         }
 
         function saveObservation(element) {
-            const text = element.innerText.trim();
-            element.classList.add('saving');
-            fetch('/Ausentismo/GuardarObservacion', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    OperatorCode: element.getAttribute('data-opid'),
-                    PeriodId: parseInt(element.getAttribute('data-period')),
-                    Observation: text,
-                    Semana: parseInt(element.getAttribute('data-semana') || "1")
-                })
-            }).then(() => element.classList.remove('saving'));
-        }
+             const text = element.innerText.trim();
+
+             // Si el texto no cambió, no hacemos nada para no saturar
+             if (element.getAttribute('data-prev-text') === text) return;
+
+             element.classList.add('saving');
+
+             fetch('/ConfeccionAusentismo/GuardarObservacion', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                     OperatorCode: element.getAttribute('data-opid'),
+                     PeriodId: parseInt(element.getAttribute('data-period')),
+                     Observation: text,
+                     Semana: parseInt(element.getAttribute('data-semana') || "1")
+                 })
+             })
+             .then(response => {
+                 if (response.ok) {
+                     element.setAttribute('data-prev-text', text); // Guardamos el estado actual
+                 }
+                 element.classList.remove('saving');
+             })
+             .catch(() => element.classList.remove('saving'));
+         }
+         document.querySelectorAll('.editable-motivo').forEach(el => {
+             el.addEventListener('keydown', function(e) {
+                 if (e.key === 'Enter') {
+                     e.preventDefault();
+                     this.blur(); // Esto dispara automáticamente el onblur que ya tienes
+                 }
+             });
+         });
 
         const input = document.getElementById('periodSearchInput');
         const container = document.getElementById('periodSearchResults');
@@ -204,9 +224,9 @@
             container.style.display = 'block';
         });
 
-        document.querySelectorAll('.search-item').forEach(item => {
+        document.querySelectorAll('.search-item').forEach(item => { 
             item.addEventListener('click', function() {
-                // CORRECCIÓN: Se cambió al Action correcto del Controlador
+                // CORRECCIÓN: Se cambió al Action correcto del Controlador 
                 window.location.href = '/Ausentismo/ReporteOperariosHoras?periodId=' + this.getAttribute('data-id');
             });
         });

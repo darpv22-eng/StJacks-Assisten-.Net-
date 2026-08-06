@@ -528,10 +528,9 @@
         }
         function confirmDeletePeriod() {
             if (confirm(`¿Eliminar definitivamente "${selectedPeriodName}"?`)) {
-                // DeletePeriod ahora es POST con token antiforgery (antes era un GET destructivo)
                 const form = document.createElement('form');
                 form.method = 'post';
-                form.action = `/Operators/DeletePeriod/${selectedPeriodId}`;
+                form.action = `/ConfeccionOperators/DeletePeriod/${selectedPeriodId}`;
                 const tokenInput = document.createElement('input');
                 tokenInput.type = 'hidden';
                 tokenInput.name = '__RequestVerificationToken';
@@ -547,7 +546,7 @@
 
             let current = cell.innerText.trim();
             let next = states[(states.indexOf(current) + 1) % states.length];
-            $.post('/Operators/UpdateAttendance', {
+            $.post('/ConfeccionOperators/UpdateAttendance', {
                 operatorId: cell.dataset.opid,
                 date: cell.dataset.date,
                 status: next,
@@ -569,7 +568,7 @@
             }
         }
         function saveTime() {
-            $.post('/Operators/UpdateAttendance', {
+            $.post('/ConfeccionOperators/UpdateAttendance', {
                 operatorId: document.getElementById('timeOpId').value,
                 date: document.getElementById('timeDate').value,
                 status: document.getElementById('timeModal').dataset.nextStatus,
@@ -590,7 +589,7 @@
         function confirmDeleteOperator(id, name) {
             if (confirm(`¿Está seguro de eliminar al operario "${name}"?`)) {
                 const form = document.createElement('form');
-                form.method = 'post'; form.action = `/Operators/DeleteConfirmed/${id}`;
+                form.method = 'post'; form.action = `/ConfeccionOperators/DeleteConfirmed/${id}`;
                 const token = document.createElement('input');
                 token.type = 'hidden';
                 token.name = '__RequestVerificationToken';

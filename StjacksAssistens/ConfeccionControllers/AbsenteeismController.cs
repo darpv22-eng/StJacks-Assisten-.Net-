@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace StjacksAssistens.ConfeccionControllers
 {
-    public class AusentismoController : Controller
+    public class ConfeccionAusentismoController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly ReporteService _reportes;
 
-        public AusentismoController(ApplicationDbContext context, ReporteService reportes)
+        public ConfeccionAusentismoController(ApplicationDbContext context, ReporteService reportes)
         {
             _context = context;
             _reportes = reportes;
@@ -262,24 +262,66 @@ namespace StjacksAssistens.ConfeccionControllers
             }
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GuardarObservacion([FromBody] StjacksAssistens.ConfeccionModels.ObservationRequest request)
-        {
-            if (request == null) return BadRequest("Datos inválidos");
-            var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
-            if (operario == null) return NotFound();
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> GuardarObservacion([FromBody] StjacksAssistens.ConfeccionModels.ObservationRequest request)
+        //{
+        //    if (request == null) return BadRequest("Datos inválidos");
+        //    var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
+        //    if (operario == null) return NotFound();
 
-            var asistencias = await _context.Set<Attendence>()
-                .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
+        //    var asistencias = await _context.Set<Attendence>()
+        //        .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
+        //        .ToListAsync();
+
+        //    foreach (var item in asistencias)
+        //    {
+        //        item.Observation = request.Observation;
+        //    }
+        //    await _context.SaveChangesAsync();
+        //    return Ok();
+        //}
+        [HttpPost]
+        public async Task<IActionResult> GuardarObservacion([FromBody] ObservacionRequestDto request)
+        {
+            // 1. Buscar el operador por su Código
+            var operador = await _context.Operators.FirstOrDefaultAsync(o => o.Code == request.OperatorCode);
+            if (operador == null) return NotFound(new { success = false, message = "Operador no encontrado" });
+
+            // 2. Obtener todas las asistencias del periodo ordenadas por fecha
+            var asistenciasDelPeriodo = await _context.Attendence // Asegúrate de que el nombre del DbSet sea correcto
+                .Where(a => a.OperatorsId == operador.OperatorsId && a.PeriodId == request.PeriodId)
+                .OrderBy(a => a.AttendanceDate)
                 .ToListAsync();
 
-            foreach (var item in asistencias)
+            if (!asistenciasDelPeriodo.Any())
+                return NotFound(new { success = false, message = "No hay registros de asistencia para este periodo." });
+
+            List<Attendence> registrosSemana = new List<Attendence>();
+
+            // 3. Separar de forma segura entre Semana 1 y Semana 2
+            // Asumiendo que la Semana 1 son los primeros 5 registros hábiles (Lunes a Viernes) 
+            // y la Semana 2 son los siguientes.
+            if (request.Semana == 1)
             {
-                item.Observation = request.Observation;
+                registrosSemana = asistenciasDelPeriodo.Take(5).ToList();
             }
+            else if (request.Semana == 2)
+            {
+                registrosSemana = asistenciasDelPeriodo.Skip(5).Take(5).ToList();
+            }
+
+            if (!registrosSemana.Any())
+                return NotFound(new { success = false, message = "No se encontraron registros para la semana especificada." });
+
+            // 4. Actualizar la observación en los registros de esa semana
+            foreach (var asistencia in registrosSemana)
+            {
+                asistencia.Observation = request.Observation;
+            }
+
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { success = true });
         }
 
         #region REPORTE EMPAQUE

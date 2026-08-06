@@ -270,17 +270,56 @@ namespace StjacksAssistens.Controllers
         [HttpPost]
         //[ValidateAntiForgeryToken]
         //[Authorize(Roles = "Admin")]
+        //public async Task<IActionResult> DeletePeriod(int id)
+        //{
+        //    var period = await _context.Set<Periodss>().FindAsync(id);
+        //    if (period != null)
+        //    {
+        //        var relatedAttendance = _context.Set<Attendence>().Where(a => a.PeriodId == id);
+        //        _context.Set<Attendence>().RemoveRange(relatedAttendance);
+        //        _context.Set<Periodss>().Remove(period);
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    return RedirectToAction(nameof(Index));
+        //}
+
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePeriod(int id)
         {
-            var period = await _context.Set<Periodss>().FindAsync(id);
-            if (period != null)
+            try
             {
-                var relatedAttendance = _context.Set<Attendence>().Where(a => a.PeriodId == id);
-                _context.Set<Attendence>().RemoveRange(relatedAttendance);
-                _context.Set<Periodss>().Remove(period);
-                await _context.SaveChangesAsync();
+                var period = await _context.Set<Periodss>().FindAsync(id);
+                if (period != null)
+                {
+                    // 1. Buscar y remover la asistencia relacionada
+                    var relatedAttendance = _context.Set<Attendence>().Where(a => a.PeriodId == id);
+                    if (relatedAttendance.Any())
+                    {
+                        _context.Set<Attendence>().RemoveRange(relatedAttendance);
+                        // Guardamos primero los cambios de los hijos para evitar conflictos de FK
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // 2. Remover el periodo
+                    _context.Set<Periodss>().Remove(period);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Si es una petición AJAX, puedes retornar Ok() para que el JS recargue la página manualmente
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Ok();
+                }
+
+                // Redirección limpia a la vista principal
+                return RedirectToAction(nameof(Index));
             }
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                // Si hay un error de base de datos por otra tabla relacionada, puedes manejarlo aquí
+                TempData["Error"] = "No se pudo eliminar el periodo porque tiene registros dependientes asociados.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         //// Elimina un operario y su asistencia asociada. POST + antiforgery + solo Admin
