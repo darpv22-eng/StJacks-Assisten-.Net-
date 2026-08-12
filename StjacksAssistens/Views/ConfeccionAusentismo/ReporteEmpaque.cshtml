@@ -155,14 +155,14 @@
 
         document.querySelectorAll('.search-item').forEach(item => {
             item.addEventListener('click', function() {
-                window.location.href = '/Ausentismo/ReporteEmpaque?periodId=' + this.getAttribute('data-id');
+                window.location.href = '/ConfeccionAusentismo/ReporteEmpaque?periodId=' + this.getAttribute('data-id');
             });
         });
 
         function saveObservation(element) {
             const text = element.innerText.trim();
             element.classList.add('saving');
-            fetch('/Ausentismo/GuardarObservacion', {
+            fetch('/ConfeccionAusentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

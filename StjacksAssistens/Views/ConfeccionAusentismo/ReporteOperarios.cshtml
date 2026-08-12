@@ -144,7 +144,7 @@
             const text = element.innerText.trim();
             element.classList.add('saving');
 
-            fetch('/Ausentismo/GuardarObservacion', {
+            fetch('/ConfeccionAusentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -172,7 +172,7 @@
         document.querySelectorAll('.search-item').forEach(item => {
             item.addEventListener('click', function() {
                 // CORRECCIÓN: Se cambió al Action correcto del Controlador
-                window.location.href = '/Ausentismo/ReporteOperarios?periodId=' + this.getAttribute('data-id');
+                window.location.href = '/ConfeccionAusentismo/ReporteOperarios?periodId=' + this.getAttribute('data-id');
             });
         });
     </script>

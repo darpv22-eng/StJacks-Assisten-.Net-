@@ -163,7 +163,7 @@
 
             row.querySelector('.label-descuento').innerText = "$ " + monto.toFixed(2);
 
-            fetch('/Ausentismo/GuardarHorasEmpaque', {
+            fetch('/ConfeccionAusentismo/GuardarHorasEmpaque', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

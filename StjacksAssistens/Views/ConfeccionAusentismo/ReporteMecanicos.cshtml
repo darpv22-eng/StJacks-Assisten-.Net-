@@ -158,23 +158,24 @@
 
         allItems.forEach(item => {
             item.addEventListener('click', function() {
-                window.location.href = '/Ausentismo/ReporteMecanicos?periodId=' + this.getAttribute('data-id');
+                window.location.href = '/ConfeccionAusentismo/ReporteMecanicos?periodId=' + this.getAttribute('data-id');
             });
         });
 
         function saveObservation(element) {
             const text = element.innerText.trim();
             element.classList.add('saving');
-            fetch('/Ausentismo/GuardarObservacion', {
+            fetch('/ConfeccionAusentismo/GuardarObservacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     OperatorCode: element.getAttribute('data-opid'),
                     PeriodId: parseInt(element.getAttribute('data-period')),
                     Observation: text,
-                    SemanaNumero: parseInt(element.getAttribute('data-semana') || "1")
+                    Semana: parseInt(element.getAttribute('data-semana') || "1") // <--- Corregido a "Semana"
                 })
-            }).then(() => element.classList.remove('saving'));
+            }).then(() => element.classList.remove('saving'))
+              .catch(() => element.classList.remove('saving'));
         }
     </script>
 </body>

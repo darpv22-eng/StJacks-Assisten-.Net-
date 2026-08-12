@@ -42,6 +42,7 @@ namespace StjacksAssistens.ConfeccionControllers
         }
 
         // 2. REPORTE POR HORAS (Faltas Parciales "PP")
+        // 2. REPORTE POR HORAS (Faltas Parciales "PP")
         public async Task<IActionResult> ReporteOperariosHoras(int? periodId)
         {
             if (periodId == null || periodId == 0)
@@ -56,7 +57,7 @@ namespace StjacksAssistens.ConfeccionControllers
 
             ViewBag.TodosLosPeriodos = await _reportes.ObtenerTodosLosPeriodosAsync();
 
-            // CORRECCIÓN: Filtrar asistencias PP asegurando que pertenezcan a Confección usando .Area
+            // 1. Obtener solo los registros "PP" de Confección para identificar quiénes tienen faltas parciales
             var asistenciasConPP = await _context.Set<Attendence>()
                 .Include(a => a.Operator).ThenInclude(o => o.Area)
                 .Where(a => a.PeriodId == periodId && a.Status == "PP" && a.Operator.Area.Name.Contains("Confeccion"))
@@ -69,19 +70,24 @@ namespace StjacksAssistens.ConfeccionControllers
                 .Where(o => o.Area.Name.Contains("Confeccion") && idsConfeccionConFalta.Contains(o.OperatorsId))
                 .ToListAsync();
 
-            // Una sola consulta con todas las asistencias del periodo (antes se consultaba dentro del foreach)
+            // 2. Obtener todas las asistencias del periodo para estos operarios (para calcular horas totales)
             var asistenciasPeriodo = await _context.Set<Attendence>()
                 .Where(a => a.PeriodId == periodId && idsConfeccionConFalta.Contains(a.OperatorsId))
                 .ToListAsync();
 
             var listaEmpleados = new List<EmpleadoAusencia>();
+            DateTime midPoint = periodo.StartDate.AddDays(7);
 
             foreach (var op in operators)
             {
+                // Obtener asistencias del operario
                 var asisOp = asistenciasPeriodo.Where(a => a.OperatorsId == op.OperatorsId).ToList();
 
-                var registroConHoras = asisOp.FirstOrDefault(a => (a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0);
-                DateTime midPoint = periodo.StartDate.AddDays(7);
+                // Calcular horas y minutos (solo basándose en los registros "PP" para ser consistentes)
+                var registroConHoras = asisOp.FirstOrDefault(a => a.Status == "PP" && ((a.Hours ?? 0) > 0 || (a.Minutes ?? 0) > 0));
+
+                // Filtrar asistencias específicamente para el reporte de semanas (SOLO "PP")
+                var asistenciasPP = asisOp.Where(a => a.Status == "PP").ToList();
 
                 listaEmpleados.Add(new EmpleadoAusencia
                 {
@@ -90,10 +96,11 @@ namespace StjacksAssistens.ConfeccionControllers
                     HorasAusente = registroConHoras?.Hours ?? 0,
                     MinutosAusente = registroConHoras?.Minutes ?? 0,
                     Semanas = new List<SemanaDetalle>
-                    {
-                        _reportes.GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate < midPoint && a.Status == "PP")),
-                        _reportes.GenerarDetalleSemana(asisOp.Where(a => a.AttendanceDate >= midPoint && a.Status == "PP"))
-                    }
+            {
+                // Pasamos únicamente la lista filtrada de "PP"
+                _reportes.GenerarDetalleSemana(asistenciasPP.Where(a => a.AttendanceDate < midPoint)),
+                _reportes.GenerarDetalleSemana(asistenciasPP.Where(a => a.AttendanceDate >= midPoint))
+            }
                 });
             }
 
@@ -261,60 +268,53 @@ namespace StjacksAssistens.ConfeccionControllers
                 return StatusCode(500, $"Error al guardar: {ex.Message}");
             }
         }
-
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> GuardarObservacion([FromBody] StjacksAssistens.ConfeccionModels.ObservationRequest request)
-        //{
-        //    if (request == null) return BadRequest("Datos inválidos");
-        //    var operario = await _context.Set<Operators>().FirstOrDefaultAsync(o => o.Code.ToString() == request.OperatorCode);
-        //    if (operario == null) return NotFound();
-
-        //    var asistencias = await _context.Set<Attendence>()
-        //        .Where(a => a.OperatorsId == operario.OperatorsId && a.PeriodId == request.PeriodId)
-        //        .ToListAsync();
-
-        //    foreach (var item in asistencias)
-        //    {
-        //        item.Observation = request.Observation;
-        //    }
-        //    await _context.SaveChangesAsync();
-        //    return Ok();
-        //}
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarObservacion([FromBody] ObservacionRequestDto request)
         {
             // 1. Buscar el operador por su Código
             var operador = await _context.Operators.FirstOrDefaultAsync(o => o.Code == request.OperatorCode);
-            if (operador == null) return NotFound(new { success = false, message = "Operador no encontrado" });
+            if (operador == null)
+                return NotFound(new { success = false, message = "Operador no encontrado" });
 
-            // 2. Obtener todas las asistencias del periodo ordenadas por fecha
-            var asistenciasDelPeriodo = await _context.Attendence // Asegúrate de que el nombre del DbSet sea correcto
+            // 2. Obtener el periodo para calcular las fechas límite de las semanas
+            var periodo = await _reportes.ObtenerPeriodoAsync(request.PeriodId);
+            if (periodo == null)
+                return NotFound(new { success = false, message = "Periodo no encontrado." });
+
+            // 3. Obtener todas las asistencias del periodo para este operador
+            var asistenciasDelPeriodo = await _context.Set<Attendence>()
                 .Where(a => a.OperatorsId == operador.OperatorsId && a.PeriodId == request.PeriodId)
-                .OrderBy(a => a.AttendanceDate)
                 .ToListAsync();
 
             if (!asistenciasDelPeriodo.Any())
                 return NotFound(new { success = false, message = "No hay registros de asistencia para este periodo." });
 
+            // 4. Definir el punto de corte catorcenal (ej. 7 días o fin de semana 1)
+            // Coincidiendo con tu lógica de reportes:
+            DateTime finSemana1 = periodo.StartDate.AddDays(6).Date; // O midPoint según manejes tus catorcenas
+
             List<Attendence> registrosSemana = new List<Attendence>();
 
-            // 3. Separar de forma segura entre Semana 1 y Semana 2
-            // Asumiendo que la Semana 1 son los primeros 5 registros hábiles (Lunes a Viernes) 
-            // y la Semana 2 son los siguientes.
             if (request.Semana == 1)
             {
-                registrosSemana = asistenciasDelPeriodo.Take(5).ToList();
+                // Semana 1: Desde el inicio del periodo hasta el final de la semana 1
+                registrosSemana = asistenciasDelPeriodo
+                    .Where(a => a.AttendanceDate.Date <= finSemana1)
+                    .ToList();
             }
             else if (request.Semana == 2)
             {
-                registrosSemana = asistenciasDelPeriodo.Skip(5).Take(5).ToList();
+                // Semana 2: Desde el día siguiente al fin de semana 1 en adelante
+                registrosSemana = asistenciasDelPeriodo
+                    .Where(a => a.AttendanceDate.Date > finSemana1)
+                    .ToList();
             }
 
             if (!registrosSemana.Any())
                 return NotFound(new { success = false, message = "No se encontraron registros para la semana especificada." });
 
-            // 4. Actualizar la observación en los registros de esa semana
+            // 5. Actualizar la observación en los registros de esa semana filtrada por fecha
             foreach (var asistencia in registrosSemana)
             {
                 asistencia.Observation = request.Observation;
