@@ -163,14 +163,31 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-4 col-lg-2">
+    @* <div class="col-6 col-md-4 col-lg-2">
         <div class="stat-card shadow-sm border-primary">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon bg-success text-white"><i class="bi bi-file-earmark-excel"></i></div>
                 <div><small class="text-muted d-block">Reporte</small><span class="fw-bold small text-success">Exportar</span></div>
             </div>
         </div>
-    </div>
+    </div> *@
+    <a href="@Url.Action("BaseReport", "ConfeccionOperators")" class="btn btn-primary btn-sm px-3 py-2 shadow-sm rounded-pill text-white text-decoration-none d-inline-flex align-items-center transition-all">
+        <i class="bi bi-file-earmark-text me-2 fs-6"></i>
+        <span>Base y Reportes por Líneas</span>
+    </a>
+
+    <style>
+        .transition-all {
+            transition: all 0.2s ease-in-out;
+        }
+
+            .transition-all:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+            }
+    </style>
+
+
 </div>
 <div class="mb-4">
     <ul class="nav nav-tabs border-0 gap-2">

@@ -339,5 +339,31 @@ namespace StjacksAssistens.Controllers
         //    }
         //    return RedirectToAction(nameof(Index));
         //}
+        [HttpGet]
+        public async Task<IActionResult> BaseReport()
+        {
+            // 1. Cargamos todos los operarios con sus relaciones
+            var operators = await _context.Operators
+                .Include(o => o.Area)
+                .Include(o => o.Linea)
+                .ToListAsync();
+
+            // 2. Extraemos las líneas únicas directamente de los operarios que ya tienen una línea asignada,
+            // evitando así cualquier problema con el DbSet de líneas.
+            var lines = operators
+                .Where(o => o.Linea != null)
+                .Select(o => o.Linea)
+                .Distinct()
+                .ToList();
+
+            var model = new StjacksAssistens.ViewModels.BaseReportViewModel
+            {
+                Operators = operators,
+                Lines = lines // Esto ya pasa la lista exacta de líneas sin enredos de DbSets
+            };
+
+            return View(model);
+        }
     }
+
 }
