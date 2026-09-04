@@ -13,7 +13,7 @@
             <p class="text-muted small mb-0">Consulta general del personal y formatos idénticos listos para impresión por línea.</p>
         </div>
         <div>
-            <a href="@Url.Action("Index", "Operators")" class="btn btn-outline-secondary btn-sm me-2 shadow-sm">
+            <a href="@Url.Action("Index", "ConfeccionOperators")" class="btn btn-outline-secondary btn-sm me-2 shadow-sm">
                 <i class="bi bi-arrow-left"></i> Volver
             </a>
         </div>
@@ -78,9 +78,9 @@
                 {
                     @foreach (var linea in Model.Lines)
                     {
-                        var lineaId = linea.GetType().GetProperty("Id")?.GetValue(linea, null);
-                        var lineaNombre = linea.GetType().GetProperty("Name")?.GetValue(linea, null) ?? "SIN LÍNEA";
-                        var operariosLinea = Model.Operators?.Where(o => o.LineaId != null && o.LineaId.Equals(lineaId)).ToList() ?? new List<StjacksAssistens.ConfeccionModels.Operators>();
+                        var lineaId = linea.Id;
+                        var lineaNombre = linea.Name ?? "SIN LÍNEA";
+                        var operariosLinea = Model.Operators?.Where(o => o.LineaId == lineaId).ToList() ?? new List<StjacksAssistens.ConfeccionModels.Operators>();
 
                         <!-- TARJETA CON EL DISEÑO EXACTO AL FORMATO DE EXCEL -->
                         <div class="card shadow-sm border rounded-3 p-3 bg-white report-sheet" id="sheet-@lineaId">
@@ -150,7 +150,6 @@
                                                 contador++;
                                             }
 
-                                            // Relleno automático hasta 13 filas para replicar exactamente el tamaño de tu Excel
                                             int totalFilasRelleno = 13;
                                             for (int i = contador; i <= totalFilasRelleno; i++)
                                             {
@@ -202,7 +201,10 @@
     }
 </script>
 
-<!-- ESTILOS CSS GENERALES -->
 <style>
-   
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+    }
 </style>

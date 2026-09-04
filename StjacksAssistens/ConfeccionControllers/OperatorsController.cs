@@ -31,8 +31,6 @@ namespace StjacksAssistens.Controllers
             ViewBag.AllPeriods = allPeriods;
             ViewBag.Categories = allCategories;
             ViewBag.SelectedCategory = categoryId;
-
-            // 2. Determinar periodo actual (Corrección del error de compilación p.PeriodId -> p.Id)
             Periodss? currentPeriod = null;
             if (periodId.HasValue)
             {
@@ -40,7 +38,6 @@ namespace StjacksAssistens.Controllers
             }
             else
             {
-                // Busca el activo, si no hay ninguno, toma el último de la lista
                 currentPeriod = allPeriods.FirstOrDefault(p => p.IsActive == true) ?? allPeriods.FirstOrDefault();
             }
 
@@ -53,36 +50,26 @@ namespace StjacksAssistens.Controllers
 
             if (currentPeriod != null)
             {
-                // Generar los días del periodo, excluyendo Sábados y Domingos
                 for (var date = currentPeriod.StartDate; date <= currentPeriod.EndDate; date = date.AddDays(1))
                 {
-                    // Solo agregamos si NO es Sábado (Saturday) y NO es Domingo (Sunday)
                     if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
                     {
                         viewModel.DaysInPeriod.Add(date);
                     }
                 }
-
-                // 3. CONSULTA: Traer operarios incluyendo sus relaciones de Área y Línea
                 var query = _context.Set<Operators>()
                     .Include(o => o.Area)
                     .Include(o => o.Linea)
                     .AsQueryable();
-
-                // Filtrado opcional por categoría (Área o Línea) si se presiona un filtro en la vista
                 if (categoryId.HasValue)
                 {
                     query = query.Where(o => o.AreaId == categoryId.Value || o.LineaId == categoryId.Value);
                 }
 
                 var operatorsList = await query.ToListAsync();
-
-                // 4. Cargar las asistencias existentes de este periodo
                 var attendances = await _context.Set<Attendence>()
                     .Where(a => a.PeriodId == currentPeriod.Id)
                     .ToListAsync();
-
-                // 5. Construir las filas del ViewModel para la tabla
                 foreach (var op in operatorsList)
                 {
                     string areaName = op.Area?.Name ?? "Sin Área";
@@ -97,12 +84,10 @@ namespace StjacksAssistens.Controllers
                         LineaId = op.LineaId,
                         CategoryName = $"{areaName}{lineaName}"
                     };
-
-                    // Llenar el estado de asistencia para cada día
                     foreach (var day in viewModel.DaysInPeriod)
                     {
                         var att = attendances.FirstOrDefault(a => a.OperatorsId == op.OperatorsId && a.AttendanceDate.Date == day.Date);
-                        row.DailyStatus[day.Date] = att?.Status ?? "X"; // "X" por defecto si está vacío
+                        row.DailyStatus[day.Date] = att?.Status ?? "X";
                     }
 
                     viewModel.Rows.Add(row);
@@ -128,8 +113,6 @@ namespace StjacksAssistens.Controllers
                     AreaId = AreaId,
                     LineaId = LineaId
                 };
-
-                // Validamos resguardo para CategoryId si sigue mapeado como obligatorio en BD
                 if (AreaId.HasValue)
                 {
                     nuevoOperario.CategoryId = AreaId.Value;
@@ -172,8 +155,8 @@ namespace StjacksAssistens.Controllers
             {
                 operario.Code = Code;
                 operario.Name = Name;
-                operario.AreaId = AreaId;   // Asignación manual del Área desde el modal
-                operario.LineaId = LineaId; // Asignación manual de la Línea desde el modal
+                operario.AreaId = AreaId;
+                operario.LineaId = LineaId;
 
                 if (AreaId.HasValue)
                 {
@@ -205,16 +188,14 @@ namespace StjacksAssistens.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAttendance(int operatorId, DateTime date, string status, int periodId, string? start, string? end)
         {
-            // 1. Busca el registro usando el nombre correcto de la propiedad: OperatorsId
             var attendance = await _context.Attendence
                 .FirstOrDefaultAsync(a => a.OperatorsId == operatorId && a.AttendanceDate.Date == date.Date && a.PeriodId == periodId);
 
             if (attendance == null)
             {
-                // Si no existe, créalo
                 attendance = new Attendence
                 {
-                    OperatorsId = operatorId, // También aquí
+                    OperatorsId = operatorId,
                     AttendanceDate = date,
                     PeriodId = periodId,
                     Status = status
@@ -225,8 +206,6 @@ namespace StjacksAssistens.Controllers
             {
                 attendance.Status = status;
             }
-
-            // TryParse evita un 500 si llega una hora mal formada desde el cliente
             if (!string.IsNullOrEmpty(start) && TimeSpan.TryParse(start, out var startTime)) attendance.StartTime = startTime;
             if (!string.IsNullOrEmpty(end) && TimeSpan.TryParse(end, out var endTime)) attendance.EndTime = endTime;
 
@@ -266,23 +245,6 @@ namespace StjacksAssistens.Controllers
             return RedirectToAction(nameof(Index), new { periodId = id });
         }
 
-        // Antes era GET: borrar datos con un simple enlace era peligroso (CSRF, prefetch del navegador)
-        [HttpPost]
-        //[ValidateAntiForgeryToken]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> DeletePeriod(int id)
-        //{
-        //    var period = await _context.Set<Periodss>().FindAsync(id);
-        //    if (period != null)
-        //    {
-        //        var relatedAttendance = _context.Set<Attendence>().Where(a => a.PeriodId == id);
-        //        _context.Set<Attendence>().RemoveRange(relatedAttendance);
-        //        _context.Set<Periodss>().Remove(period);
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    return RedirectToAction(nameof(Index));
-        //}
-
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePeriod(int id)
         {
@@ -291,75 +253,66 @@ namespace StjacksAssistens.Controllers
                 var period = await _context.Set<Periodss>().FindAsync(id);
                 if (period != null)
                 {
-                    // 1. Buscar y remover la asistencia relacionada
                     var relatedAttendance = _context.Set<Attendence>().Where(a => a.PeriodId == id);
                     if (relatedAttendance.Any())
                     {
                         _context.Set<Attendence>().RemoveRange(relatedAttendance);
-                        // Guardamos primero los cambios de los hijos para evitar conflictos de FK
                         await _context.SaveChangesAsync();
                     }
-
-                    // 2. Remover el periodo
                     _context.Set<Periodss>().Remove(period);
                     await _context.SaveChangesAsync();
                 }
-
-                // Si es una petición AJAX, puedes retornar Ok() para que el JS recargue la página manualmente
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Ok();
                 }
-
-                // Redirección limpia a la vista principal
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                // Si hay un error de base de datos por otra tabla relacionada, puedes manejarlo aquí
                 TempData["Error"] = "No se pudo eliminar el periodo porque tiene registros dependientes asociados.";
                 return RedirectToAction(nameof(Index));
             }
         }
 
-        //// Elimina un operario y su asistencia asociada. POST + antiforgery + solo Admin
-        //// (la vista de Asistencia envía el token en un form dinámico).
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> DeleteConfirmed(int id)
-        //{
-        //    var operario = await _context.Set<Operators>().FindAsync(id);
-        //    if (operario != null)
-        //    {
-        //        var relatedAttendance = _context.Set<Attendence>().Where(a => a.OperatorsId == id);
-        //        _context.Set<Attendence>().RemoveRange(relatedAttendance);
-        //        _context.Set<Operators>().Remove(operario);
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    return RedirectToAction(nameof(Index));
-        //}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var operario = await _context.Set<Operators>().FindAsync(id);
+            if (operario != null)
+            {
+                var relatedAttendance = _context.Set<Attendence>().Where(a => a.OperatorsId == id);
+                if (relatedAttendance.Any())
+                {
+                    _context.Set<Attendence>().RemoveRange(relatedAttendance);
+                }
+
+                _context.Set<Operators>().Remove(operario);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
         [HttpGet]
         public async Task<IActionResult> BaseReport()
         {
-            // 1. Cargamos todos los operarios con sus relaciones
             var operators = await _context.Operators
                 .Include(o => o.Area)
                 .Include(o => o.Linea)
+                .OrderBy(o => o.Name)
                 .ToListAsync();
-
-            // 2. Extraemos las líneas únicas directamente de los operarios que ya tienen una línea asignada,
-            // evitando así cualquier problema con el DbSet de líneas.
             var lines = operators
                 .Where(o => o.Linea != null)
-                .Select(o => o.Linea)
+                .Select(o => o.Linea!)
                 .Distinct()
+                .OrderBy(l => l.Name)
                 .ToList();
 
             var model = new StjacksAssistens.ViewModels.BaseReportViewModel
             {
                 Operators = operators,
-                Lines = lines // Esto ya pasa la lista exacta de líneas sin enredos de DbSets
+                Lines = lines
             };
 
             return View(model);
